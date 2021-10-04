@@ -16,7 +16,9 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The da
 
 **Training**\
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graph for each event of your selected PU level.\
+\
 You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset.\
+\
 *Fast simulation dataset:* Training can be on both supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. 
 - Semi-supervised training: in `/fast_simulation` directory, run
 ```bash
