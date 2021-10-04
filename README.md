@@ -17,12 +17,14 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf).
 **Training**\
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graph for each event of your selected PU level.\
 *Fast simulation dataset:* Training can be on both supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. 
-- Semi-supervised training: run 
+- Semi-supervised training: in `/fast_simulation` directory, run
 ```bash
- python UDAGCN_demo.py
+ python train_fastsim.py
  ``` 
- in `/fast_simulation` directory
-- Supervised training: run 
+- Supervised training: in `/real_simulation` directory, run 
+```bash
+ python train_realsim.py
+ ``` 
 
 *Real simulation dataset:*\
 
