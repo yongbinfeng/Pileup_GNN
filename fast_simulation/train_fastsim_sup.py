@@ -1,7 +1,7 @@
 import argparse
 import torch
 from torch_geometric.data import DataLoader
-import models_ggnn_oldpipe as models
+import models_fastsim as models
 import utils
 import matplotlib
 from copy import deepcopy
@@ -41,7 +41,7 @@ def arg_parse():
     parser.add_argument('--comment', type=bool,
                         help='indicate whether to comment out some lines in model initialization')
 
-    parser.set_defaults(model_type='Gated_no_at',
+    parser.set_defaults(model_type='Gated',
                         num_layers=2,
                         batch_size=1,
                         hidden_dim=20,
