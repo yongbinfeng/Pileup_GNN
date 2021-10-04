@@ -14,7 +14,7 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf).
 - numpy ==1.20.1
 - torch_geometric == 1.6.3
 
-**Training**
+**Training**\
 *Fast simulation dataset:*\
 -Training can be on supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. To train on the 
 *Real simulation dataset:*\
