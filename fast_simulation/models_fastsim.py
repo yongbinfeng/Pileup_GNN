@@ -8,7 +8,7 @@ import math
 from math import pi
 
 class GNNStack(torch.nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, args, comment, hybrid):
+    def __init__(self, input_dim, hidden_dim, output_dim, args):
         # since we do not need phi, eta and puppiweight in x
         input_dim = input_dim - 3
 
@@ -25,16 +25,9 @@ class GNNStack(torch.nn.Module):
             nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Dropout(args.dropout),
             nn.Linear(hidden_dim, output_dim))
 
-        if comment == False:
-            self.before_mp = nn.Sequential(
-                nn.Linear(input_dim, input_dim), nn.ReLU(),
-                nn.Linear(input_dim, input_dim), nn.ReLU())
-            self.batchnorm = nn.BatchNorm1d(hidden_dim)
-
 
         self.dropout = args.dropout
         self.beta_one = nn.parameter.Parameter(torch.rand(1))
-        self.hybrid = hybrid
         self.num_layers = args.num_layers
 
 
@@ -73,14 +66,8 @@ class GNNStack(torch.nn.Module):
         x = self.post_mp(x)
 
         x = torch.sigmoid(x)
-
-        if self.hybrid == True:
-            b1 = torch.sigmoid(self.beta_one)
-            before_x = torch.clone(x)
-            x = b1 * x + (1 - b1) * pw
-            return before_x, x
-        else:
-            return x, x
+        
+        return x, x
 
     def loss(self, pred, label):
         # loss = nn.CrossEntropyLoss()
