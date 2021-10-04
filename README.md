@@ -1,12 +1,21 @@
 # Pileup_GNN
 This repository is the implementation in PyTorch for the paper "Semi-supervised Graph Neural Networks for Pileup Per Particle Identification".
 
-**Datasets**: The raw datasets are stored in the `/datasets` folder with the `prepare_dataset.py` to generate graph for each event.
+**Datasets**
 - Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
 with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The datasets for different pileup conditions can be obtrained from [here](https://zenodo.org/search?page=1&size=20&q=PuppiML).
 - Real simulation dataset is a more realistic setting of pileup simulation, which can be obtained from [here]().
 - `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
+
+**Construct graphs**
+- In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
+- graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.8.
+- After downloading the raw files for datasets, specify the correct root in the files.
+- For example, to construct graphs for fast simlation dataset with `deltaR` 0.4. Run
+```bash
+ python prepare_dataset_fastsim.py --deltaR 0.4
+ ```
 
 **Dependencies**
 - Python ==3.8
@@ -15,7 +24,7 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The da
 - torch_geometric == 1.6.3
 
 **Training**\
-Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graph for each event of your selected PU level. Graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running `prepare_dataset.py`. The default is 0.8.\
+Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graphs as instructed in **Construct graphs** section.\
 \
 You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset.\
 \
@@ -26,7 +35,7 @@ You can specify arguments for training, or it will follow the default sets in th
  ``` 
  For example, if you want to train on PU80 with 2 layers of gated model with 20 dimension. Run 
  ```bash
- python train_fastsim_semi.py --model_type='Gated' --num_layers=2 --hidden_dim=20 --pulevel=80
+ python train_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 80
  ``` 
 - Supervised training: in `/real_simulation` directory, run 
 ```bash
@@ -52,7 +61,7 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  The arguments for testing is the same as training. You should specify the arguments based on the model you want to test and the `pulevel` you want to test on.
  For example, the model you are want to test a semi-supervised 2\*20 gated model on nPU=140, then you can run
  ```bash
- python test_fastsim_semi.py --model_type='Gated' --num_layers=2 --hidden_dim=20 --pulevel=140
+ python test_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 140
  ``` 
  
 
