@@ -57,7 +57,7 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  
 
 **Saved models**\
-There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure above.
+There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
 
 
 
