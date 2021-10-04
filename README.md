@@ -3,7 +3,7 @@ This repository is the implementation in PyTorch for the paper "Semi-supervised 
 
 **Datasets**: The raw datasets are stored in the `/datasets` folder with the `prepare_dataset.py` to generate graph for each event.
 - Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
-with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The dataset can be obtrained from [here]().
+with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The datasets for different pileup conditions can be obtrained from [here](https://zenodo.org/search?page=1&size=20&q=PuppiML).
 - Real simulation dataset is a more realistic setting of pileup simulation, which can be obtained from [here]().
 - `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
@@ -15,7 +15,7 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The da
 - torch_geometric == 1.6.3
 
 **Training**\
-Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graph for each event of your selected PU level.\
+Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graph for each event of your selected PU level. Graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running `prepare_dataset.py`. The default is 0.8.\
 \
 You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset.\
 \
