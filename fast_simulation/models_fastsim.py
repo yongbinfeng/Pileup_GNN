@@ -21,7 +21,6 @@ class GNNStack(torch.nn.Module):
             self.convs.append(conv_model(hidden_dim, hidden_dim))
 
         # post-message-passing
-
         self.post_mp = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim), nn.ReLU(), nn.Dropout(args.dropout),
             nn.Linear(hidden_dim, output_dim))
@@ -36,17 +35,14 @@ class GNNStack(torch.nn.Module):
         self.dropout = args.dropout
         self.beta_one = nn.parameter.Parameter(torch.rand(1))
         self.hybrid = hybrid
-        #self.beta_two = nn.parameter.Parameter(torch.ones(1))
         self.num_layers = args.num_layers
 
 
     def build_conv_model(self, model_type):
         if model_type == 'GraphSage':
             return GraphSage
-        elif model_type == 'Gated_no_at':
-            return Gated_model_wo_attention
-        elif model_type == 'Gated_at':
-            return Gated_model_attention
+        elif model_type == 'Gated':
+            return Gated_model
 
     def forward(self, data):
         num_feature = data.num_feature_actual[0].item()
@@ -140,10 +136,9 @@ class GraphSage(pyg_nn.MessagePassing):
 
         return aggr_out
 
-
-class Gated_model_wo_attention(pyg_nn.MessagePassing):
+class Gated_model(pyg_nn.MessagePassing):
     def __init__(self, in_channels, out_channels, normalize_embedding=True):
-        super(Gated_model_wo_attention, self).__init__(aggr='mean')
+        super(Gated_model, self).__init__(aggr='mean')
         # last sclar = d_eta, d_phi, d_R, append x_i, x_j, x_g so * 3，+1 for log count
         new_x_input = 3 * (in_channels) + 3 + 1
         self.x_dim = new_x_input
