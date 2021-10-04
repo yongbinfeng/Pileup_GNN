@@ -5,8 +5,8 @@ The raw datasets are stored in the `/datasets` folder with the `prepare_dataset.
 - Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
 with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf)
 - Real simulation dataset is a more realistic setting of pileup simulation
-- `/fast_simulation` directory contains the files to train the models and test on fast simulation dataset in GGNN.
-- `/real_simulation` directory contains the files to train the models and test on real simulation dataset. 
+- `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
+- `/real_simulation` directory contains the training and testing files on real simulation dataset. 
 
 **Dependencies**
 - Python ==3.8
