@@ -39,6 +39,7 @@ In `/real_simulation` directory, run
 
 **Testing**\
 After training phase, the trained models will be saved and ready for testing. Testing will directly load the models saved during training.\
+\
 Testing can be done on both charged and neutral particles for semi-supervised learning or neutral particles for supervised learning.
 - Fast simulation: There are three testing files in `/fast_simulation` directory, `test_fastsim_semi.py` for semi-supervised, `test_fastsim_sup.py` for supervised and `general_test.py` if you want to compare the neutral performance of both supervised and semi-supervised training. Choose one of the three testing scheme. 
 ```bash
@@ -46,6 +47,12 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  python test_fastsim_semi.py
  python general_test.py
  ``` 
+ The arguments for testing is the same as training. You should specify the arguments based on the model you want to test and the `pulevel` you want to test on.
+ For example, the model you are want to test a semi-supervised 2\*20 gated model on nPU=140, then you can run
+ ```bash
+ python test_fastsim_semi.py --model_type='Gated' --num_layers=2 --hidden_dim=20 --pulevel=140
+ ``` 
+ 
 
 **Saved models**\
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure above.
