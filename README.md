@@ -3,8 +3,8 @@ This repository is the implementation in PyTorch for the paper "".
 
 **Datasets**: The raw datasets are stored in the `/datasets` folder with the `prepare_dataset.py` to generate graph for each event.
 - Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
-with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf).
-- Real simulation dataset is a more realistic setting of pileup simulation.
+with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The dataset can be obtrained from [here]().
+- Real simulation dataset is a more realistic setting of pileup simulation, which can be obtained from [here]().
 - `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
 
