@@ -19,14 +19,22 @@ Before start training the models, you should first run `prepare_dataset.py` in `
 *Fast simulation dataset:* Training can be on both supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. 
 - Semi-supervised training: in `/fast_simulation` directory, run
 ```bash
- python train_fastsim.py
+ python train_fastsim_semi.py
  ``` 
 - Supervised training: in `/real_simulation` directory, run 
+```bash
+ python train_fastsim_sup.py
+ ``` 
+
+*Real simulation dataset:* Training can only be in semi-supervised setting since there are no labels for neutral particles \
+In `/real_simulation` directory, run
 ```bash
  python train_realsim.py
  ``` 
 
-*Real simulation dataset:*\
+**Testing**
+
+
 
 
 
