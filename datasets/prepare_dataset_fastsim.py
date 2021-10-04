@@ -45,19 +45,34 @@ def buildConnections(eta, phi):
 def prepare_dataset(num_event):
     num_file = max(int(num_event / 100), 1)
     particles = []
-    for i in range(num_file):
-        if i == num_file - 1:
-            cur_num_event = num_event - i * 100
+    count = 0
+    event_index = 0
+    while count < num_file:
+        if count == num_file - 1:
+            cur_num_event = num_event - count * 100
         else:
             cur_num_event = 100
 
-        filepath = "ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
-                   + str(i) + ".h5"
+        filepath = "./dataset/pileup/PU80/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
+                   + str(event_index) + ".h5"
+
+        j = event_index
+        while True:
+            if path.exists(filepath):
+                break
+            else:
+                j += 1
+                filepath = "./dataset/pileup/PU80/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
+                           + str(j) + ".h5"
+
+        count += 1
+        event_index = j
+        event_index += 1
         event = h5py.File(filepath, "r")
+        print(filepath)
         temp_particles = list(np.array(event['Particles'][0:cur_num_event]))
 
         particles = particles + temp_particles
-
 
     data_list = []
     for i in range(num_event):
