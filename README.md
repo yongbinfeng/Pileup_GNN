@@ -1,5 +1,5 @@
 # Pileup_GNN
-This repository is the implementation in PyTorch for the paper "".
+This repository is the implementation in PyTorch for the paper "Semi-supervised Graph Neural Networks for Pileup Per Particle Identification".
 
 **Datasets**: The raw datasets are stored in the `/datasets` folder with the `prepare_dataset.py` to generate graph for each event.
 - Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
@@ -33,6 +33,8 @@ In `/real_simulation` directory, run
  ``` 
 
 **Testing**
+
+
 
 
 
