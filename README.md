@@ -20,7 +20,8 @@ Before start training the models, you should first run `prepare_dataset.py` in `
 - Semi-supervised training: run 
 ```bash
  python UDAGCN_demo.py
- ``` in `/fast_simulation` directory
+ ``` 
+ in `/fast_simulation` directory
 - Supervised training: run 
 
 *Real simulation dataset:*\
