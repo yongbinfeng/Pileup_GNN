@@ -51,8 +51,6 @@ def arg_parse():
                         hybrid_sup=False,
                         pulevel=140,
                         deltar=0.8,
-                        comment_semi=False,
-                        comment_sup=True,
                         )
 
     return parser.parse_args()
@@ -72,11 +70,11 @@ def train(dataset_test, args, batchsize):
     testing_loader = DataLoader(dataset_test, batch_size=batchsize)
 
     # testing on the load model
-    model_load_semi = models.GNNStack(dataset_test[0].num_feature_actual, args.hidden_dim, 1, args, args.comment_semi, args.hybrid_semi)
+    model_load_semi = models.GNNStack(dataset_test[0].num_feature_actual, args.hidden_dim, 1, args)
     model_load_semi.load_state_dict(torch.load(path_semi + '/best_valid_model.pt'))
     model_load_semi = model_load_semi.to(device)
 
-    model_load_sup = models.GNNStack(dataset_test[0].num_feature_actual, args.hidden_dim, 1, args, args.comment_sup, args.hybrid_sup)
+    model_load_sup = models.GNNStack(dataset_test[0].num_feature_actual, args.hidden_dim, 1, args)
     model_load_sup.load_state_dict(torch.load(path_sup + '/best_valid_model.pt'))
     model_load_sup = model_load_sup.to(device)
 
