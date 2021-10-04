@@ -14,6 +14,13 @@ import copy
 np.random.seed(0)
 from timeit import default_timer as timer
 
+def arg_parse():
+    parser = argparse.ArgumentParser(description='dataset arguments.')
+    parser.add_argument('--deltaR', type=float,
+                        help='deltaR for connecting particles when building the graph')
+
+    parser.set_defaults(deltaR=0.8)
+    return parser.parse_args()
 
 def cal_Median_LeftRMS(x):
     """
@@ -27,7 +34,7 @@ def cal_Median_LeftRMS(x):
     return median, rmsLeft
 
 
-def buildConnections(eta, phi):
+def buildConnections(eta, phi, deltaR):
     """
     build the Graph based on the deltaEta and deltaPhi of input particles
     """
@@ -37,8 +44,8 @@ def buildConnections(eta, phi):
     dist_phi[indices] = dist_phi[indices] - temp
     dist_eta = distance.cdist(eta, eta, 'cityblock')
     dist = np.sqrt(dist_phi ** 2 + dist_eta ** 2)
-    edge_source = np.where((dist < 0.8) & (dist != 0))[0]
-    edge_target = np.where((dist < 0.8) & (dist != 0))[1]
+    edge_source = np.where((dist < deltaR) & (dist != 0))[0]
+    edge_target = np.where((dist < deltaR) & (dist != 0))[1]
     return edge_source, edge_target
 
 
@@ -73,6 +80,7 @@ def prepare_dataset(num_event):
         temp_particles = list(np.array(event['Particles'][0:cur_num_event]))
 
         particles = particles + temp_particles
+
 
     data_list = []
     for i in range(num_event):
@@ -121,7 +129,7 @@ def prepare_dataset(num_event):
         # calculate deltaR
         eta = event[:, 5:6]
         phi = event[:, 6:7]
-        edge_source, edge_target = buildConnections(eta, phi)
+        edge_source, edge_target = buildConnections(eta, phi, args.deltaR)
         edge_index = torch.tensor([edge_source, edge_target], dtype=torch.long)
         print("done!!")
 
@@ -158,11 +166,12 @@ def prepare_dataset(num_event):
 
 
 def main():
+    args = arg_parse()
     start = timer()
-    num_events = 200
+    num_events = 3000
     dataset = prepare_dataset(num_events)
 
-    with open("dataset_ggnn_onehot_" + str(num_events), "wb") as fp:
+    with open("dataset_fastsim" + str(num_events), "wb") as fp:
         pickle.dump(dataset, fp)
 
     end = timer()
