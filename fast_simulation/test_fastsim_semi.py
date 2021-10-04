@@ -40,8 +40,6 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
-    parser.add_argument('--comment', type=bool,
-                        help='indicate whether to comment out some lines in model initialization')
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
@@ -50,8 +48,7 @@ def arg_parse():
                         dropout=0,
                         hybrid=True,
                         pulevel=20,
-                        deltar=0.4,
-                        comment=True
+                        deltar=0.4
                         )
 
     return parser.parse_args()
@@ -84,7 +81,7 @@ def train(dataset_test, args, batchsize):
     testing_loader = DataLoader(dataset_test, batch_size=batchsize)
 
     # testing on the load model
-    model_load = models.GNNStack(dataset_test[0].num_feature_actual, args.hidden_dim, 1, args, args.comment, args.hybrid)
+    model_load = models.GNNStack(dataset_test[0].num_feature_actual, args.hidden_dim, 1, args)
     model_load.load_state_dict(torch.load(path + '/best_valid_model.pt'))
     model_load = model_load.to(device)
 
