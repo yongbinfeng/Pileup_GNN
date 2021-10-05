@@ -71,16 +71,23 @@ There are some pretrained models included in `/saved_models` directory. They can
 **Gilbreth Cluster Helpful tips**\
 ###Install packages###\
 For installing packages, [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/examples/apps/python/packages) includes all kinds of detials. In general, here are some steps:
-- module load anaconda/5.1.0-py36
-- conda-env-mod create -p /depot/mylab/apps/mypackages
-- module load use.own
-- module load conda-env/mypackages-py3.6.4
+
+ ```bash
+module load anaconda/5.1.0-py36
+conda-env-mod create -p /depot/mylab/apps/mypackages
+module load use.own
+module load conda-env/mypackages-py3.6.4
+```
 
 ####Install with pip####\
-- pip install mpi4py
+```bash
+pip install mpi4py
+```
 
 ####Install with Conda####\
-- conda install opencv
+```bash
+conda install opencv
+```
 
 ###how to create job scripts###\
 To submit job to the cluster, first create job scripts using instruction in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/script)
