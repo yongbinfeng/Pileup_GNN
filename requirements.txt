@@ -1,0 +1,9 @@
+# Note: although newest version of torch can be used, but the current version is 1.7.0
+torch
+numpy
+argparse
+matplotlib
+tqdm
+sklearn
+imageio
+mplhep
