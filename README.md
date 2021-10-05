@@ -1,14 +1,14 @@
 # Pileup_GNN
 This repository is the implementation in PyTorch for the paper "Semi-supervised Graph Neural Networks for Pileup Per Particle Identification".
 
-**Datasets**
+## Datasets ##
 - Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
 with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The datasets for different pileup conditions can be obtrained from [here](https://zenodo.org/search?page=1&size=20&q=PuppiML).
 - Real simulation dataset is a more realistic setting of pileup simulation, which can be obtained from [here]().
 - `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
 
-**Construct graphs**
+## Construct graphs ##
 - In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
 - graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.8.
 - After downloading the raw files for datasets, specify the correct root in the files.
@@ -17,13 +17,13 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The da
  python prepare_dataset_fastsim.py --deltaR 0.4
  ```
 
-**Dependencies**
+## Dependencies ##
 - Python ==3.8
 - Torch  ==1.7.1
 - numpy ==1.20.1
 - torch_geometric == 1.6.3
 
-**Training**\
+## Training ##\
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graphs as instructed in **Construct graphs** section.\
 \
 You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset.\
@@ -48,7 +48,7 @@ In `/real_simulation` directory, run
  python train_realsim.py
  ``` 
 
-**Testing**\
+## Testing ##\
 After training phase, the trained models will be saved and ready for testing. Testing will directly load the models saved during training.\
 \
 Testing can be done on both charged and neutral particles for semi-supervised learning or neutral particles for supervised learning.
@@ -65,10 +65,10 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  ``` 
  
 
-**Saved models**\
+## Saved models ##\
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
 
-**Gilbreth Cluster Helpful tips**\
+## Gilbreth Cluster Helpful tips ##\
 
 ### Install packages ###
 For installing packages, [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/examples/apps/python/packages) includes all kinds of detials. In general, here are some steps:
