@@ -8,15 +8,6 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The da
 - `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
 
-## Construct graphs ##
-- In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
-- graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.8.
-- After downloading the raw files for datasets, specify the correct root in the files.
-- For example, to construct graphs for fast simlation dataset with `deltaR` 0.4. Run
-```bash
- python prepare_dataset_fastsim.py --deltaR 0.4
- ```
-
 ## Dependencies ##
 - Python ==3.8
 - Torch  ==1.7.1
@@ -29,6 +20,15 @@ For convience, requirements.txt can be used, run as the following
 pip3 install -r requirements.txt
 ```
 However, this doesn't include torch_geometric related packeages. Tutorials about how to install torch_geometric could be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (Note: please check CUDA version before installation)
+
+## Construct graphs ##
+- In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
+- graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.8.
+- After downloading the raw files for datasets, specify the correct root in the files.
+- For example, to construct graphs for fast simlation dataset with `deltaR` 0.4. Run
+```bash
+ python prepare_dataset_fastsim.py --deltaR 0.4
+ ```
 
 ## Training ##
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graphs as instructed in **Construct graphs** section.\
@@ -71,7 +71,6 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  python test_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 140
  ``` 
  
-
 ## Saved models ##
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
 
