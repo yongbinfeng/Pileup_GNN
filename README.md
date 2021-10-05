@@ -79,23 +79,23 @@ module load use.own
 module load conda-env/mypackages-py3.6.4
 ```
 
-####Install with pip####\
+****Install with pip****\
 ```bash
 pip install mpi4py
 ```
 
-####Install with Conda####\
+****Install with Conda****\
 ```bash
 conda install opencv
 ```
 
-###how to create job scripts###\
+***how to create job scripts***\
 To submit job to the cluster, first create job scripts using instruction in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/script)
 
-###how to submit jobs###\
+***how to submit jobs***\
 Once job script is created, use instructions in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/submit) to submit jobs to the cluster.
 
-###how to monitor job status and outputs###\
+***how to monitor job status and outputs***\
 After job submission, use instructions in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/status) to monitor job status and [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/output) to check job output.
 
 
