@@ -23,7 +23,7 @@ with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The da
 - numpy ==1.20.1
 - torch_geometric == 1.6.3
 
-## Training ##\
+## Training ##
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graphs as instructed in **Construct graphs** section.\
 \
 You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset.\
@@ -48,7 +48,7 @@ In `/real_simulation` directory, run
  python train_realsim.py
  ``` 
 
-## Testing ##\
+## Testing ##
 After training phase, the trained models will be saved and ready for testing. Testing will directly load the models saved during training.\
 \
 Testing can be done on both charged and neutral particles for semi-supervised learning or neutral particles for supervised learning.
@@ -65,10 +65,10 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  ``` 
  
 
-## Saved models ##\
+## Saved models ##
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
 
-## Gilbreth Cluster Helpful tips ##\
+## Gilbreth Cluster Helpful tips ##
 
 ### Install packages ###
 For installing packages, [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/examples/apps/python/packages) includes all kinds of detials. In general, here are some steps:
@@ -90,7 +90,7 @@ pip install mpi4py
 conda install opencv
 ```
 
-#### how to create job scripts ####
+### how to create job scripts ###
 To submit job to the cluster, first create job scripts using instruction in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/script)
 
 ### how to submit jobs ###
