@@ -28,7 +28,7 @@ For convience, requirements.txt can be used, run as the following
 ```bash
 pip3 install -r requirements.txt
 ```
-However, this doesn't include torch_geometric related packeages. Tutorials about how to install torch_geometric could be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (Note, please check CUDA version before installation)
+However, this doesn't include torch_geometric related packeages. Tutorials about how to install torch_geometric could be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (Note: please check CUDA version before installation)
 
 ## Training ##
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the graphs as instructed in **Construct graphs** section.\
