@@ -68,7 +68,28 @@ Testing can be done on both charged and neutral particles for semi-supervised le
 **Saved models**\
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
 
+**Gilbreth Cluster Helpful tips**\
+###Install packages###\
+For installing packages, [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/examples/apps/python/packages) includes all kinds of detials. In general, here are some steps:
+- module load anaconda/5.1.0-py36
+- conda-env-mod create -p /depot/mylab/apps/mypackages
+- module load use.own
+- module load conda-env/mypackages-py3.6.4
 
+####Install with pip####\
+- pip install mpi4py
+
+####Install with Conda####\
+- conda install opencv
+
+###how to create job scripts###\
+To submit job to the cluster, first create job scripts using instruction in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/script)
+
+###how to submit jobs###\
+Once job script is created, use instructions in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/submit) to submit jobs to the cluster.
+
+###how to monitor job status and outputs###\
+After job submission, use instructions in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/status) to monitor job status and [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/output) to check job output.
 
 
 
