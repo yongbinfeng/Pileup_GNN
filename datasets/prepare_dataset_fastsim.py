@@ -10,6 +10,7 @@ from scipy.spatial import distance
 import h5py
 from scipy import stats
 import copy
+import os
 
 np.random.seed(0)
 from timeit import default_timer as timer
@@ -65,7 +66,7 @@ def prepare_dataset(num_event):
 
         j = event_index
         while True:
-            if path.exists(filepath):
+            if os.path.exists(filepath):
                 break
             else:
                 j += 1
