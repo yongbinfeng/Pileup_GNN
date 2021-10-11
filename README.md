@@ -23,11 +23,14 @@ However, this doesn't include torch_geometric related packeages. Tutorials about
 
 ## Construct graphs ##
 - In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
+- Download the datasets to the `/dataset` directory
 - graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.8.
+- The number of events you want to construct graphs for can be passed as an argument `--num_events`
+- The starting event can also be specified using argument `--start_event`
 - After downloading the raw files for datasets, specify the correct root in the files.
-- For example, to construct graphs for fast simlation dataset with `deltaR` 0.4. Run
+- For example, to construct graphs for fast simlation dataset with `deltaR` 0.4 with 3000 events starting from event 0. Run
 ```bash
- python prepare_dataset_fastsim.py --deltaR 0.4
+ python prepare_dataset_fastsim.py --deltaR 0.4 --num_events 3000 --start_event 0
  ```
 
 ## Training ##
