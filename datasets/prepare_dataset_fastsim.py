@@ -175,7 +175,7 @@ def main():
     start = timer()
     dataset = prepare_dataset(args.num_events)
 
-    with open("dataset_fastsim" + str(num_events), "wb") as fp:
+    with open("dataset_fastsim" + str(args.num_events), "wb") as fp:
         pickle.dump(dataset, fp)
 
     end = timer()
