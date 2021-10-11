@@ -40,6 +40,10 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
+    parser.add_argument('--testing_path', type=str,
+                        help='path for the testing graphs')
+    parser.add_argument('--load_dir', type=str,
+                        help='directory to load the trained model and save the testing plots')
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
@@ -55,7 +59,7 @@ def arg_parse():
 
 
 def train(dataset_test, args, batchsize):
-    directory = "Gated_PU20_r04_001_2_20_semi_boost_15v1"
+    directory = args.load_dir
     parent_dir = "/home/liu2112/project"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
@@ -307,28 +311,8 @@ def generate_neu_mask(dataset):
 def main():
     args = arg_parse()
     print(args.model_type)
-
-    if args.pulevel == 20:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar04_test_3000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar08_test_3000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-
-    elif args.pulevel == 80:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_deltar04_test_1000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_deltar08_test_1000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-    else:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_deltar04_test_800", "rb") as fp:
-                dataset_test = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_deltar08_test_800", "rb") as fp:
+    
+    with open(args.testing_path, "rb") as fp:
                 dataset_test = pickle.load(fp)
 
     generate_neu_mask(dataset_test)
