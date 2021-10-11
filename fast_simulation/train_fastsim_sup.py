@@ -40,9 +40,8 @@ def arg_parse():
                         help='path for the training graphs')
     parser.add_argument('--validation_path', type=str,
                         help='path for the validation graphs')
-    parser.add_argument('--save_dir', type=str,
+    parser.add_argument('--save_dir', type=str, required=True,
                         help='directory to save the trained model and plots')
-    
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
@@ -78,7 +77,7 @@ def train(dataset, dataset_validation, args, batchsize):
     validation_loader = DataLoader(dataset_validation, batch_size=batchsize)
 
     model = models.GNNStack(dataset[0].num_feature_actual, args.hidden_dim, 1, args)
-   
+
     model.to(device)
     scheduler, opt = utils.build_optimizer(args, model.parameters())
 
@@ -106,7 +105,6 @@ def train(dataset, dataset_validation, args, batchsize):
     valid_accuracy_puppi = []
     valid_fig_names = []
 
-
     count_event = 0
     best_validation_auc = 0
     converge = False
@@ -124,7 +122,7 @@ def train(dataset, dataset_validation, args, batchsize):
             # to determine if the model converges; if so, then stop the training
 
             count_event += 1
-            #print("this is event " + str(count_event))
+            # print("this is event " + str(count_event))
             epochs_train.append(count_event)
             batch = batch.to(device)
             _, pred = model.forward(batch)
@@ -157,16 +155,18 @@ def train(dataset, dataset_validation, args, batchsize):
 
             # test on the training and validation dataset
             if count_event % 100 == 0:
-                training_loss, train_acc, train_auc, train_puppi_acc, train_puppi_auc, train_fig_name = test(training_loader,
-                                                                                                             model, 0,
-                                                                                                             count_event, args)
-                valid_loss, valid_acc, valid_auc, valid_puppi_acc, valid_puppi_auc, valid_fig_name = test(validation_loader, model, 1,
-                                                                                                    count_event, args)
+                training_loss, train_acc, train_auc, train_puppi_acc, train_puppi_auc, train_fig_name = test(
+                    training_loader,
+                    model, 0,
+                    count_event, args)
+                valid_loss, valid_acc, valid_auc, valid_puppi_acc, valid_puppi_auc, valid_fig_name = test(
+                    validation_loader, model, 1,
+                    count_event, args)
 
-                #epochs_train.append(count_event)
+                # epochs_train.append(count_event)
                 epochs_valid.append(count_event)
                 loss_graph_valid.append(valid_loss)
-                #avg_training_loss = sum(loss_graph[-100:])
+                # avg_training_loss = sum(loss_graph[-100:])
                 loss_graph_train.append(training_loss)
                 auc_graph_train_puppi.append(train_puppi_auc)
                 auc_graph_valid_puppi.append(valid_puppi_auc)
@@ -208,7 +208,6 @@ def train(dataset, dataset_validation, args, batchsize):
 
         t.close()
 
-
     end = timer()
     training_time = end - start
     print("training time " + str(training_time))
@@ -219,6 +218,7 @@ def train(dataset, dataset_validation, args, batchsize):
                                 train_accuracy_puppi,
                                 loss_graph_valid, auc_graph_valid, valid_accuracy, auc_graph_valid_puppi,
                                 valid_accuracy_puppi, args.save_dir)
+
 
 def test(loader, model, indicator, epoch, args):
     if indicator == 0:
@@ -293,17 +293,18 @@ def test(loader, model, indicator, epoch, args):
     utils.plot_roc([label_all_chg, label_all_chg],
                    [pred_all_chg, puppi_all_chg],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_test", args.save_dir)
+                   postfix=postfix + "_test", dir_name=args.save_dir)
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0]],
                                                    legends=['LV Neutral', 'PU Neutral'],
-                                                   postfix=postfix + "_prediction", label='Prediction', args.save_dir)
+                                                   postfix=postfix + "_prediction", label='Prediction', dir_name=args.save_dir)
     fig_name_puppi = utils.plot_discriminator(epoch,
                                               [puppi_all_chg[label_all_chg == 1], puppi_all_chg[label_all_chg == 0]],
                                               legends=['LV Neutral', 'PU Neutral'],
-                                              postfix=postfix + "_puppi", label='PUPPI Weight', args.save_dir)
+                                              postfix=postfix + "_puppi", label='PUPPI Weight', dir_name=args.save_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, fig_name_prediction
+
 
 def generate_mask(dataset):
     # mask all neutrals with pt cut to train
@@ -358,10 +359,9 @@ def main():
 
     # load the constructed graphs
     with open(args.training_path, "rb") as fp:
-         dataset = pickle.load(fp)
+        dataset = pickle.load(fp)
     with open(args.validation_path, "rb") as fp:
-         dataset_validation = pickle.load(fp)
-    
+        dataset_validation = pickle.load(fp)
 
     train(dataset, dataset_validation, args, 1)
 
