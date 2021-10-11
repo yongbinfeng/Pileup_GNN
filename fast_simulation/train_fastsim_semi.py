@@ -182,13 +182,13 @@ def train(dataset, dataset_validation, args, batchsize):
                 train_puppi_acc, train_puppi_auc, \
                 train_acc_neu, train_auc_neu, train_auc_neu_hybrid, \
                 train_puppi_acc_neu, train_puppi_auc_neu, train_fig_name = test(
-                    training_loader, model, 0, count_event)
+                    training_loader, model, 0, count_event, args)
 
                 valid_loss, valid_loss_hybrid, valid_acc, valid_auc, valid_auc_hybrid,\
                 valid_puppi_acc, valid_puppi_auc, \
                 valid_acc_neu, valid_auc_neu, valid_auc_neu_hybrid, \
                 valid_puppi_acc_neu, valid_puppi_auc_neu, valid_fig_name = test(
-                    validation_loader, model, 1, count_event)
+                    validation_loader, model, 1, count_event, args)
 
                 epochs_valid.append(count_event)
                 loss_graph_valid.append(valid_loss)
@@ -253,15 +253,10 @@ def train(dataset, dataset_validation, args, batchsize):
                         loss_graph_valid, auc_graph_valid, valid_accuracy_neu, auc_graph_valid_puppi,
                         valid_accuracy_puppi_neu,
                         auc_graph_neu_train, auc_graph_train_puppi_neu,
-                        auc_graph_neu_valid, auc_graph_valid_puppi_neu
+                        auc_graph_neu_valid, auc_graph_valid_puppi_neu, args.save_dir
                         )
-    if args.hybrid == True:
-        utils.plot_boost_train(epochs_valid, loss_graph_train, loss_graph_train_hybrid,
-                         auc_graph_train_puppi, auc_graph_train_puppi_neu,
-                         auc_graph_train, auc_graph_neu_train,
-                         auc_graph_train_hybrid, auc_graph_neu_train_hybrid)
 
-def test(loader, model, indicator, epoch):
+def test(loader, model, indicator, epoch, args):
     if indicator == 0:
         postfix = 'Train'
     elif indicator == 1:
@@ -362,20 +357,20 @@ def test(loader, model, indicator, epoch):
     utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
                    [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_test")
+                   postfix=postfix + "_test", args.save_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
                                                     pred_all_neu[label_all_neu == 1],
                                                     pred_all_neu[label_all_neu == 0]],
                                                    legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
-                                                   postfix=postfix + "_prediction", label='Prediction')
+                                                   postfix=postfix + "_prediction", label='Prediction', args.save_dir)
     fig_name_puppi = utils.plot_discriminator(epoch,
                                               [puppi_all_chg[label_all_chg == 1], puppi_all_chg[label_all_chg == 0],
                                                puppi_all_neu[label_all_neu == 1],
                                                puppi_all_neu[label_all_neu == 0]],
                                               legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
-                                              postfix=postfix + "_puppi", label='PUPPI Weight')
+                                              postfix=postfix + "_puppi", label='PUPPI Weight', args.save_dir)
 
     return total_loss, total_loss_hybrid, acc_chg, auc_chg, auc_chg_hybrid, acc_chg_puppi, auc_chg_puppi, \
            acc_neu, auc_neu, auc_neu_hybrid, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
