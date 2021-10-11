@@ -42,9 +42,8 @@ def arg_parse():
                         help='path for training graphs')
     parser.add_argument('--validation_path', type=str,
                         help='path for validation graphs')
-    parser.add_argument('--save_dir', type=str,
+    parser.add_argument('--save_dir', type=str, required=True,
                         help='directory to save trained model and plots')
-    
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
@@ -52,20 +51,21 @@ def arg_parse():
                         hidden_dim=20,
                         dropout=0,
                         opt='adam',
-                        #opt_scheduler='step',
-                        #opt_decay_step=100,
-                        #opt_decay_rate=0.001,
+                        # opt_scheduler='step',
+                        # opt_decay_step=100,
+                        # opt_decay_rate=0.001,
                         weight_decay=0,
                         lr=0.001,
                         pulevel=20,
-                        deltar=0.4)
+                        deltar=0.4
+                        )
 
     return parser.parse_args()
 
 
 def train(dataset, dataset_validation, args, batchsize):
     directory = args.save_dir
-    parent_dir = "/home/liu2112/project"
+    parent_dir = "/home/li2657/Pileup_GNN-main/fast_simulation"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
 
@@ -143,9 +143,11 @@ def train(dataset, dataset_validation, args, batchsize):
             cur_loss = 0
             feature_with_mask = batch.x
             for iter in range(rotate_mask):
-                #print("h")
+                # print("h")
                 num_feature = batch.num_feature_actual[0].item()
-                batch.x = torch.cat((feature_with_mask[:, 0:num_feature],feature_with_mask[:, (num_feature+iter)].view(-1, 1), feature_with_mask[:, -num_feature:]), 1)
+                batch.x = torch.cat((feature_with_mask[:, 0:num_feature],
+                                     feature_with_mask[:, (num_feature + iter)].view(-1, 1),
+                                     feature_with_mask[:, -num_feature:]), 1)
                 batch = batch.to(device)
 
                 pred, _ = model.forward(batch)
@@ -181,7 +183,7 @@ def train(dataset, dataset_validation, args, batchsize):
                 train_puppi_acc_neu, train_puppi_auc_neu, train_fig_name = test(
                     training_loader, model, 0, count_event, args)
 
-                valid_loss, valid_loss_hybrid, valid_acc, valid_auc, valid_auc_hybrid,\
+                valid_loss, valid_loss_hybrid, valid_acc, valid_auc, valid_auc_hybrid, \
                 valid_puppi_acc, valid_puppi_auc, \
                 valid_acc_neu, valid_auc_neu, valid_auc_neu_hybrid, \
                 valid_puppi_acc_neu, valid_puppi_auc_neu, valid_fig_name = test(
@@ -253,6 +255,7 @@ def train(dataset, dataset_validation, args, batchsize):
                         auc_graph_neu_valid, auc_graph_valid_puppi_neu, args.save_dir
                         )
 
+
 def test(loader, model, indicator, epoch, args):
     if indicator == 0:
         postfix = 'Train'
@@ -280,7 +283,7 @@ def test(loader, model, indicator, epoch, args):
             num_feature = data.num_feature_actual[0].item()
             test_mask = data.x[:, num_feature]
 
-            data.x = torch.cat((data.x[:, 0:num_feature],test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
+            data.x = torch.cat((data.x[:, 0:num_feature], test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
             data = data.to(device)
             # max(dim=1) returns values, indices tuple; only need indices
             pred, pred_hybrid = model.forward(data)
@@ -354,20 +357,20 @@ def test(loader, model, indicator, epoch, args):
     utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
                    [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_test", args.save_dir)
+                   postfix=postfix + "_test", dir_name=args.save_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
                                                     pred_all_neu[label_all_neu == 1],
                                                     pred_all_neu[label_all_neu == 0]],
                                                    legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
-                                                   postfix=postfix + "_prediction", label='Prediction', args.save_dir)
+                                                   postfix=postfix + "_prediction", label='Prediction', dir_name=args.save_dir)
     fig_name_puppi = utils.plot_discriminator(epoch,
                                               [puppi_all_chg[label_all_chg == 1], puppi_all_chg[label_all_chg == 0],
                                                puppi_all_neu[label_all_neu == 1],
                                                puppi_all_neu[label_all_neu == 0]],
                                               legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
-                                              postfix=postfix + "_puppi", label='PUPPI Weight', args.save_dir)
+                                              postfix=postfix + "_puppi", label='PUPPI Weight', dir_name=args.save_dir)
 
     return total_loss, total_loss_hybrid, acc_chg, auc_chg, auc_chg_hybrid, acc_chg_puppi, auc_chg_puppi, \
            acc_neu, auc_neu, auc_neu_hybrid, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
@@ -389,11 +392,11 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                 num_select_PU = min(PU_index.shape[0], num_select_PU)
 
             # generate the index for LV and PU samples for training mask
-            #gen_index_LV = random.sample(range(LV_index.shape[0]), num_select_LV)
-            selected_LV_train = LV_index[(num*num_select_LV):((num+1)*num_select_LV)]
+            # gen_index_LV = random.sample(range(LV_index.shape[0]), num_select_LV)
+            selected_LV_train = LV_index[(num * num_select_LV):((num + 1) * num_select_LV)]
 
-            #gen_index_PU = random.sample(range(PU_index.shape[0]), num_select_PU)
-            selected_PU_train = PU_index[(num*num_select_PU):((num+1)*num_select_PU)]
+            # gen_index_PU = random.sample(range(PU_index.shape[0]), num_select_PU)
+            selected_PU_train = PU_index[(num * num_select_PU):((num + 1) * num_select_PU)]
 
             training_mask = np.concatenate((selected_LV_train, selected_PU_train), axis=None)
             # print(training_mask)
@@ -403,13 +406,13 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
             mask_training_cur[[training_mask.tolist()]] = 1
             mask_training[:, num] = mask_training_cur
 
-
         x_concat = torch.cat((original_feature, mask_training), 1)
         graph.x = x_concat
 
         # mask the puppiWeight as default Neutral(here puppiweight is actually fromLV in ggnn dataset)
         puppiWeight_default_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
-                                    torch.zeros(graph.num_nodes, 1), torch.ones(graph.num_nodes, 1)), 1)
+                                                          torch.zeros(graph.num_nodes, 1),
+                                                          torch.ones(graph.num_nodes, 1)), 1)
 
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
 
@@ -448,7 +451,7 @@ def main():
         dataset = pickle.load(fp)
     with open(args.validation_path, "rb") as fp:
         dataset_validation = pickle.load(fp)
-    
+
     generate_neu_mask(dataset)
     generate_neu_mask(dataset_validation)
     train(dataset, dataset_validation, args, 1)
