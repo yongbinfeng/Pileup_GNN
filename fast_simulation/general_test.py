@@ -38,10 +38,15 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
-    parser.add_argument('--comment_semi', type=bool,
-                        help='indicate whether to comment out some lines in model initialization')
-    parser.add_argument('--comment_sup', type=bool,
-                        help='indicate whether to comment out some lines in model initialization')
+    parser.add_argument('--testing_path', type=str,
+                        help='path for the testing graphs')
+    parser.add_argument('--load_dir_semi', type=str,
+                        help='directory to load the semi-supervised trained model and save the testing plots')
+    parser.add_argument('--load_dir_semi', type=str,
+                        help='directory to load the semi-supervised trained model and save the testing plots')
+    parser.add_argument('--load_dir_sup', type=float,
+                        help='directory to load the supervised trained model and save the testing plots')
+    
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
                         batch_size=1,
@@ -57,8 +62,8 @@ def arg_parse():
 
 
 def train(dataset_test, args, batchsize):
-    directory_semi= "Gated_PU80_r08_007_2_20_semi_noboost"
-    directory_sup = "Gated_PU80_r08_007_2_20_sup_noboost"
+    directory_semi = args.load_dir_semi
+    directory_sup = args.load_dir_sup
     parent_dir = "/home/liu2112/project"
     path_semi = os.path.join(parent_dir, directory_semi)
     path_sup = os.path.join(parent_dir, directory_sup)
@@ -90,20 +95,15 @@ def train(dataset_test, args, batchsize):
         postfix = 'PU140'
     else:
         postfix = 'PU20'
-    """
-    utils.plot_roc_lowerleft([label, label, label],
-                       [pred_semi, pred_sup, puppi],
-                       legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
-                       postfix=postfix + "combined_testfinal")
-    """
+    
     utils.plot_roc([label, label, label],
                              [pred_semi, pred_sup, puppi],
                              legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
-                             postfix=postfix + "combined_testfinal")
+                             postfix=postfix + "combined_testfinal", args.load_dir_semi)
     utils.plot_roc_logscale([label, label, label],
                              [pred_semi, pred_sup, puppi],
                              legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
-                             postfix=postfix + "combined_testfinal")
+                             postfix=postfix + "combined_testfinal", args.load_dir_semi)
 
     print("Semi final test neutral auc " + str(test_auc_final_semi))
     print("Sup final test neutral auc " + str(test_auc_final_sup))
@@ -229,30 +229,10 @@ def generate_mask(dataset):
 def main():
     args = arg_parse()
     print(args.model_type)
-
-    if args.pulevel == 20:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar04_test_3000", "rb") as fp:
+    
+    with open(args.testing_path, "rb") as fp:
                 dataset_test = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar08_test_3000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-
-    elif args.pulevel == 80:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_deltar04_test_1000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_deltar08_test_1000", "rb") as fp:
-                dataset_test = pickle.load(fp)
-    else:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_deltar04_test_800", "rb") as fp:
-                dataset_test = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_deltar08_test_800", "rb") as fp:
-                dataset_test = pickle.load(fp)
-
+            
     train(dataset_test, args, 1)
 
 
