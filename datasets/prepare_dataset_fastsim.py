@@ -19,8 +19,12 @@ def arg_parse():
     parser = argparse.ArgumentParser(description='dataset arguments.')
     parser.add_argument('--deltaR', type=float,
                         help='deltaR for connecting particles when building the graph')
+    parser.add_argument('--num_events', type=int,
+                        help='number of events to construct graphs')
+
 
     parser.set_defaults(deltaR=0.8)
+    parser.set_defaults(num_events=3000)
     return parser.parse_args()
 
 def cal_Median_LeftRMS(x):
@@ -169,8 +173,7 @@ def prepare_dataset(num_event):
 def main():
     args = arg_parse()
     start = timer()
-    num_events = 3000
-    dataset = prepare_dataset(num_events)
+    dataset = prepare_dataset(args.num_events)
 
     with open("dataset_fastsim" + str(num_events), "wb") as fp:
         pickle.dump(dataset, fp)
