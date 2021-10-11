@@ -36,9 +36,9 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
-    parser.add_argument('--testing_path', type=str,
+    parser.add_argument('--testing_path', type=str, required=True,
                         help='path for the testing graphs')
-    parser.add_argument('--load_dir', type=str,
+    parser.add_argument('--load_dir', type=str, required=True,
                         help='directory to load the trained model and save the testing plots')
 
     parser.set_defaults(model_type='Gated',
