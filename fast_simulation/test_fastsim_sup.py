@@ -181,29 +181,25 @@ def test(loader, model, args, epoch):
     acc_chg = utils.get_acc(label_all_chg, pred_all_chg)
     acc_chg_puppi = utils.get_acc(label_all_chg, puppi_all_chg)
 
-
-    #utils.plot_boost_visualization(label_all_chg, pred_all_chg, puppi_all_chg, x_all, model,
-                                   #auc_all_puppi, event_num_neu, postfix, args.hybrid)
-
     utils.plot_roc_logscale([label_all_chg, label_all_chg],
                    [pred_all_chg, puppi_all_chg],
                    legends=["prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal")
+                   postfix=postfix + "_testfinal", args.load_dir)
 
     utils.plot_roc([label_all_chg, label_all_chg],
                        [pred_all_chg, puppi_all_chg],
                        legends=["prediction Neu", "PUPPI Neu"],
-                       postfix=postfix + "_testfinal")
+                       postfix=postfix + "_testfinal", args.load_dir)
 
     utils.plot_roc_lowerleft([label_all_chg, label_all_chg],
                    [pred_all_chg, puppi_all_chg],
                    legends=["prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal")
+                   postfix=postfix + "_testfinal", args.load_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0]],
                                                    legends=['LV Neutral', 'PU Neutral'],
-                                                   postfix=postfix + "_prediction", label='Prediction')
+                                                   postfix=postfix + "_prediction", label='Prediction', args.load_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, fig_name_prediction
 
