@@ -30,12 +30,8 @@ def arg_parse():
                         help='Number of graph conv layers')
     parser.add_argument('--hidden_dim', type=int,
                         help='Training hidden size')
-    parser.add_argument('--dropout', type=float,
-                        help='Dropout rate')
     parser.add_argument('--epochs', type=int,
                         help='Number of training epochs')
-    parser.add_argument('--hybrid', type=int,
-                        help='whether use puppi for hybrid algorithm')
     parser.add_argument('--pulevel', type=int,
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
@@ -49,8 +45,6 @@ def arg_parse():
                         num_layers=2,
                         batch_size=1,
                         hidden_dim=20,
-                        dropout=0,
-                        hybrid=True,
                         pulevel=20,
                         deltar=0.4
                         )
