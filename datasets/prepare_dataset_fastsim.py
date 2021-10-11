@@ -24,11 +24,14 @@ def arg_parse():
                         help='number of events to construct graphs')
     parser.add_argument('--start_event', type=int,
                         help='which event to start constructing graphs')
+    parser.add_argument('--name', type=str,
+                        help='name you want to save the graphs with')
 
 
     parser.set_defaults(deltaR=0.8)
     parser.set_defaults(num_events=3000)
-    parser.set_defaults(start_event=10)
+    parser.set_defaults(start_event=0)
+    
     return parser.parse_args()
 
 def cal_Median_LeftRMS(x):
@@ -178,8 +181,9 @@ def main():
     args = arg_parse()
     start = timer()
     dataset = prepare_dataset(args.num_events, args.start_event, args.deltaR)
-
-    with open("dataset_fastsim" + str(args.num_events), "wb") as fp:
+    
+    
+    with open(args.name , "wb") as fp:
         pickle.dump(dataset, fp)
 
     end = timer()
