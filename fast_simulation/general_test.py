@@ -34,13 +34,13 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
-    parser.add_argument('--testing_path', type=str,
+    parser.add_argument('--testing_path', type=str,required=True,
                         help='path for the testing graphs')
-    parser.add_argument('--load_dir_semi', type=str,
+    parser.add_argument('--load_dir_semi', type=str,required=True,
                         help='directory to load the semi-supervised trained model and save the testing plots')
-    parser.add_argument('--load_dir_sup', type=str,
+    parser.add_argument('--load_dir_sup', type=str, required=True,
                         help='directory to load the supervised trained model and save the testing plots')
-    
+
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
                         batch_size=1,
@@ -75,10 +75,10 @@ def train(dataset_test, args, batchsize):
     model_load_sup.load_state_dict(torch.load(path_sup + '/best_valid_model.pt'))
     model_load_sup = model_load_sup.to(device)
 
-    _, _, test_auc_final_semi, _, test_puppi_auc_final_semi, _, label, pred_semi, puppi= \
+    _, _, test_auc_final_semi, _, test_puppi_auc_final_semi, _, label, pred_semi, puppi = \
         test(testing_loader, model_load_semi)
 
-    _, _, test_auc_final_sup, _, test_puppi_auc_final_sup, _, _, pred_sup, _=\
+    _, _, test_auc_final_sup, _, test_puppi_auc_final_sup, _, _, pred_sup, _ = \
         test(testing_loader, model_load_sup)
 
     if args.pulevel == 80:
@@ -87,15 +87,15 @@ def train(dataset_test, args, batchsize):
         postfix = 'PU140'
     else:
         postfix = 'PU20'
-    
+
     utils.plot_roc([label, label, label],
-                             [pred_semi, pred_sup, puppi],
-                             legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
-                             postfix=postfix + "combined_testfinal", args.load_dir_semi)
+                   [pred_semi, pred_sup, puppi],
+                   legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
+                   postfix=postfix + "combined_testfinal", dir_name=args.load_dir_semi)
     utils.plot_roc_logscale([label, label, label],
-                             [pred_semi, pred_sup, puppi],
-                             legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
-                             postfix=postfix + "combined_testfinal", args.load_dir_semi)
+                            [pred_semi, pred_sup, puppi],
+                            legends=["Semi-supervised", "Fully-supervised", "PUPPI"],
+                            postfix=postfix + "combined_testfinal", dir_name=args.load_dir_semi)
 
     print("Semi final test neutral auc " + str(test_auc_final_semi))
     print("Sup final test neutral auc " + str(test_auc_final_sup))
@@ -103,6 +103,7 @@ def train(dataset_test, args, batchsize):
     end = timer()
     training_time = end - start
     print("testing time " + str(training_time))
+
 
 def test(loader, model):
     model.eval()
@@ -150,7 +151,6 @@ def test(loader, model):
             puppi_neu = puppi[test_mask == 1]
             puppi_neu = puppi_neu.cpu().detach().numpy()
 
-
             pred = pred[test_mask == 1]
             cur_neu_puppi_auc = utils.get_auc(label_neu, puppi_neu)
             auc_all_puppi.append(cur_neu_puppi_auc)
@@ -182,6 +182,7 @@ def test(loader, model):
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, None, \
            label_all_chg, pred_all_chg, puppi_all_chg
+
 
 def generate_mask(dataset):
     # mask all neutrals with pt cut to train
@@ -221,10 +222,10 @@ def generate_mask(dataset):
 def main():
     args = arg_parse()
     print(args.model_type)
-    
+
     with open(args.testing_path, "rb") as fp:
-                dataset_test = pickle.load(fp)
-            
+        dataset_test = pickle.load(fp)
+
     train(dataset_test, args, 1)
 
 
