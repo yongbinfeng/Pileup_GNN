@@ -40,6 +40,13 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
+    parser.add_argument('--training_path', type=str,
+                        help='path for training graphs')
+    parser.add_argument('--validation_path', type=str,
+                        help='path for validation graphs')
+    parser.add_argument('--save_path', type=str,
+                        help='path to save trained model and plots')
+    
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
@@ -60,7 +67,7 @@ def arg_parse():
 
 
 def train(dataset, dataset_validation, args, batchsize):
-    directory = "Gated_PU20_r04_001_2_20_semi_noboost_15v1"
+    directory = args.save_path
     parent_dir = "/home/liu2112/project"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
@@ -444,46 +451,12 @@ def main():
     args = arg_parse()
     print(args.model_type)
 
-    # resample the training but not reconstruct the graph
-    if args.pulevel == 20:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar04_train_9000", "rb") as fp:
-                dataset = pickle.load(fp)
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar04_validation_3000", "rb") as fp:
-                dataset_validation = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar08_train_9000", "rb") as fp:
-                dataset = pickle.load(fp)
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU20/dataset_ggnn_onehot_deltar08_validation_3000", "rb") as fp:
-                dataset_validation = pickle.load(fp)
-
-    elif args.pulevel == 80:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_deltar04_train_3000", "rb") as fp:
-                dataset = pickle.load(fp)
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_deltar04_validation_1000",
-                      "rb") as fp:
-                dataset_validation = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_train_3000", "rb") as fp:
-                dataset = pickle.load(fp)
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU80/dataset_ggnn_onehot_validation_1000",
-                      "rb") as fp:
-                dataset_validation = pickle.load(fp)
-    else:
-        if args.deltar == 0.4:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_deltar04_train_3000", "rb") as fp:
-                dataset = pickle.load(fp)
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_deltar04_validation_800",
-                      "rb") as fp:
-                dataset_validation = pickle.load(fp)
-        else:
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_train_1000", "rb") as fp:
-                dataset = pickle.load(fp)
-            with open("/scratch/gilbreth/liu2112/ggnn_graphs_PU140/dataset_ggnn_onehot_validation_400",
-                      "rb") as fp:
-                dataset_validation = pickle.load(fp)
-
+    # load the constructed graphs
+    with open(args.training_path, "rb") as fp:
+        dataset = pickle.load(fp)
+    with open(args.validation_path, "rb") as fp:
+        dataset_validation = pickle.load(fp)
+    
     generate_neu_mask(dataset)
     generate_neu_mask(dataset_validation)
     train(dataset, dataset_validation, args, 1)
