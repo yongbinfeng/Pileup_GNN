@@ -34,11 +34,10 @@ def arg_parse():
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
                         help='deltaR for connecting particles when building the graph')
-    parser.add_argument('--testing_path', type=str,
+    parser.add_argument('--testing_path', type=str, required=True,
                         help='path for the testing graphs')
-    parser.add_argument('--load_dir', type=str,
+    parser.add_argument('--load_dir', type=str, required=True,
                         help='directory to load the trained model and save the testing plots')
-    
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
@@ -83,7 +82,6 @@ def train(dataset_test, args, batchsize):
         testing_loader,
         model_load, args,
         "final")
-
 
     print("final test neutral auc " + str(test_auc_final))
     print("puppi test neutral auc " + str(test_puppi_auc_final))
@@ -146,7 +144,6 @@ def test(loader, model, args, epoch):
             puppi_neu = puppi[test_mask == 1]
             puppi_neu = puppi_neu.cpu().detach().numpy()
 
-
             pred = pred[test_mask == 1]
             cur_neu_puppi_auc = utils.get_auc(label_neu, puppi_neu)
             auc_all_puppi.append(cur_neu_puppi_auc)
@@ -177,26 +174,27 @@ def test(loader, model, args, epoch):
     acc_chg_puppi = utils.get_acc(label_all_chg, puppi_all_chg)
 
     utils.plot_roc_logscale([label_all_chg, label_all_chg],
-                   [pred_all_chg, puppi_all_chg],
-                   legends=["prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal", args.load_dir)
+                            [pred_all_chg, puppi_all_chg],
+                            legends=["prediction Neu", "PUPPI Neu"],
+                            postfix=postfix + "_testfinal", dir_name=args.load_dir)
 
     utils.plot_roc([label_all_chg, label_all_chg],
-                       [pred_all_chg, puppi_all_chg],
-                       legends=["prediction Neu", "PUPPI Neu"],
-                       postfix=postfix + "_testfinal", args.load_dir)
-
-    utils.plot_roc_lowerleft([label_all_chg, label_all_chg],
                    [pred_all_chg, puppi_all_chg],
                    legends=["prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal", args.load_dir)
+                   postfix=postfix + "_testfinal", dir_name=args.load_dir)
+
+    utils.plot_roc_lowerleft([label_all_chg, label_all_chg],
+                             [pred_all_chg, puppi_all_chg],
+                             legends=["prediction Neu", "PUPPI Neu"],
+                             postfix=postfix + "_testfinal", dir_name=args.load_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0]],
                                                    legends=['LV Neutral', 'PU Neutral'],
-                                                   postfix=postfix + "_prediction", label='Prediction', args.load_dir)
+                                                   postfix=postfix + "_prediction", label='Prediction', dir_name=args.load_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, fig_name_prediction
+
 
 def generate_mask(dataset):
     # mask all neutrals with pt cut to train
@@ -238,7 +236,7 @@ def main():
     print(args.model_type)
     with open(args.testing_path, "rb") as fp:
         dataset_test = pickle.load(fp)
-   
+
     train(dataset_test, args, 1)
 
 
