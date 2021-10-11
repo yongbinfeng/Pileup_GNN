@@ -42,9 +42,7 @@ def arg_parse():
                         help='path for the testing graphs')
     parser.add_argument('--load_dir_semi', type=str,
                         help='directory to load the semi-supervised trained model and save the testing plots')
-    parser.add_argument('--load_dir_semi', type=str,
-                        help='directory to load the semi-supervised trained model and save the testing plots')
-    parser.add_argument('--load_dir_sup', type=float,
+    parser.add_argument('--load_dir_sup', type=str,
                         help='directory to load the supervised trained model and save the testing plots')
     
     parser.set_defaults(model_type='Gated',
