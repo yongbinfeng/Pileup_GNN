@@ -36,7 +36,7 @@ However, this doesn't include torch_geometric related packeages. Tutorials about
 ## Training ##
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the training and validation graphs as instructed in **Construct graphs** section.\
 \
-You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset.\
+You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset, the `training_path` and `validation_path` to specify the path for the training and validation graphs being constructed in previous step, plus the `save_dir` to specify the directory you want to save the trained model and some training plots.\
 \
 *Fast simulation dataset:* Training can be on both supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. 
 - Semi-supervised training: in `/fast_simulation` directory, run
@@ -60,6 +60,7 @@ In `/real_simulation` directory, run
 
 ## Testing ##
 After training phase, the trained models will be saved and ready for testing. Testing will directly load the models saved during training.\
+Specify the `testing_path` in arguments to load the constructed testing graphs and `load_dir` to load the trained model and save testing plots.\
 \
 Testing can be done on both charged and neutral particles for semi-supervised learning or neutral particles for supervised learning.
 - Fast simulation: There are three testing files in `/fast_simulation` directory, `test_fastsim_semi.py` for semi-supervised, `test_fastsim_sup.py` for supervised and `general_test.py` if you want to compare the neutral performance of both supervised and semi-supervised training. Choose one of the three testing scheme. 
