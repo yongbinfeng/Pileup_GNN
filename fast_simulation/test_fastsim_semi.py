@@ -216,28 +216,24 @@ def test(loader, model, args, epoch):
     utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
                    [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal")
+                   postfix=postfix + "_testfinal", args.load_dir)
 
     utils.plot_roc_logscale([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
                    [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal")
+                   postfix=postfix + "_testfinal", args.load_dir)
 
     utils.plot_roc_lowerleft([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
                        [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
                        legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                       postfix=postfix + "_testfinal")
+                       postfix=postfix + "_testfinal", args.load_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
                                                     pred_all_neu[label_all_neu == 1],
                                                     pred_all_neu[label_all_neu == 0]],
                                                    legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
-                                                   postfix=postfix + "_prediction", label='Prediction')
-
-    utils.plot_boost_visualization([label_all_chg, label_all_neu], [pred_all_chg, pred_all_neu],
-                                   [puppi_all_chg, puppi_all_neu], [x_all_chg, x_all_neu],
-                                   model, auc_all_puppi, [event_num_chg, event_num_neu], postfix, args.hybrid)
+                                                   postfix=postfix + "_prediction", label='Prediction', args.load_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, acc_neu, auc_neu, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
 
