@@ -44,8 +44,8 @@ def arg_parse():
                         help='path for training graphs')
     parser.add_argument('--validation_path', type=str,
                         help='path for validation graphs')
-    parser.add_argument('--save_path', type=str,
-                        help='path to save trained model and plots')
+    parser.add_argument('--save_dir', type=str,
+                        help='directory to save trained model and plots')
     
 
     parser.set_defaults(model_type='Gated',
@@ -67,7 +67,7 @@ def arg_parse():
 
 
 def train(dataset, dataset_validation, args, batchsize):
-    directory = args.save_path
+    directory = args.save_dir
     parent_dir = "/home/liu2112/project"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
