@@ -121,7 +121,7 @@ def get_auc(truth, prediction):
     return auc
 
 
-def plot_roc(truths, predictions, legends, postfix="", saveTo=None):
+def plot_roc(truths, predictions, legends, postfix="", saveTo=None, dir_name):
     """
     plot the roc based on the truth (label), and the list of predictions
     """
@@ -153,7 +153,7 @@ def plot_roc(truths, predictions, legends, postfix="", saveTo=None):
     plt.savefig(dir_name + "roc_" + postfix + ".pdf", bbox_inches='tight')
     plt.close()
 
-def plot_roc_logscale(truths, predictions, legends, postfix="", saveTo=None):
+def plot_roc_logscale(truths, predictions, legends, postfix="", saveTo=None, dir_name):
     """
     plot the roc based on the truth (label), and the list of predictions
     """
@@ -186,7 +186,7 @@ def plot_roc_logscale(truths, predictions, legends, postfix="", saveTo=None):
     plt.savefig(dir_name + "roc_logscale_cut" + postfix + ".pdf", bbox_inches='tight')
     plt.close()
 
-def plot_roc_lowerleft(truths, predictions, legends, postfix="", saveTo=None):
+def plot_roc_lowerleft(truths, predictions, legends, postfix="", saveTo=None, dir_name):
     """
     plot the roc based on the truth (label), and the list of predictions
     """
@@ -223,7 +223,7 @@ def plot_roc_lowerleft(truths, predictions, legends, postfix="", saveTo=None):
     plt.savefig(dir_name + "lowerleft_roc_" + postfix + ".pdf", bbox_inches='tight')
     plt.close()
 
-def plot_hist2d(pts, weights, yname='Weight', postfix=""):
+def plot_hist2d(pts, weights, yname='Weight', postfix="", dir_name):
     """
     plot the (puppi)Weights vs pt 2D histogram
     """
@@ -237,7 +237,7 @@ def plot_hist2d(pts, weights, yname='Weight', postfix=""):
     plt.close()
 
 
-def plot_discriminator(epoch, vals, legends=['LV', 'PU'], postfix="", label="Discriminator", bins=50, xaxisrange=(0, 1)):
+def plot_discriminator(epoch, vals, legends=['LV', 'PU'], postfix="", label="Discriminator", bins=50, xaxisrange=(0, 1), dir_name):
     """
     plot the distriminator distribution
     """
@@ -269,8 +269,7 @@ def plot_training(
         loss_graph_test, auc_graph_test, test_accuracy, auc_graph_test_puppi, test_accuracy_puppi,
         auc_graph_neu_train, auc_graph_train_puppi_neu,
         auc_graph_neu_test, auc_graph_test_puppi_neu,
-        postfix=".pdf"
-):
+        postfix=".pdf", dir_name):
     # print(epochs_train)
     # print(epochs_test)
     # print(loss_graph)
@@ -327,8 +326,7 @@ def plot_training_fullsim(
         epochs_train, epochs_test, loss_graph_train,
         loss_graph, auc_graph_train, train_accuracy, auc_graph_train_puppi, train_accuracy_puppi,
         loss_graph_test, auc_graph_test, test_accuracy, auc_graph_test_puppi, test_accuracy_puppi,
-        postfix=".pdf"
-):
+        postfix=".pdf", dir_name):
     # print(epochs_train)
     # print(epochs_test)
     # print(loss_graph)
@@ -375,7 +373,7 @@ def plot_training_fullsim(
     plt.close()
 
 def plot_testing(epochs_test,
-        loss_graph_test, auc_graph_test, test_accuracy, auc_graph_test_puppi, test_accuracy_puppi,
+        loss_graph_test, auc_graph_test, test_accuracy, auc_graph_test_puppi, test_accuracy_puppi, dir_name
         ):
     # loss
     postfix = "_test.pdf"
@@ -410,7 +408,7 @@ def plot_testing(epochs_test,
     plt.clf()
     plt.close()
 
-def plot_kinematics(dataset):
+def plot_kinematics(dataset, dir_name):
     """
     plot the kinematic distribution of given particles
     """
@@ -515,7 +513,7 @@ def plot_kinematics(dataset):
     plt.close()
 
 
-def make_gif(figures, postfix="Train"):
+def make_gif(figures, postfix="Train", dir_name):
     """
     make the fig based on the list of figures
     """
