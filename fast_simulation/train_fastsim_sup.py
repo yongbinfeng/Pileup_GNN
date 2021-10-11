@@ -32,8 +32,6 @@ def arg_parse():
                         help='Dropout rate')
     parser.add_argument('--epochs', type=int,
                         help='Number of training epochs')
-    parser.add_argument('--hybrid', type=int,
-                        help='whether use puppi for hybrid algorithm')
     parser.add_argument('--pulevel', type=int,
                         help='pileup level for the dataset')
     parser.add_argument('--deltar', type=float,
@@ -54,7 +52,6 @@ def arg_parse():
                         opt='adam',
                         weight_decay=0,
                         lr=0.007,
-                        hybrid=False,
                         pulevel=80,
                         deltar=0.4
                         )
