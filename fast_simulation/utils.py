@@ -13,10 +13,6 @@ from copy import deepcopy
 import random
 import os
 
-# num graphs, lr, num_layer, hidden_neuron, change_mask, epoch, model, loss
-dir_name = "Gated_PU80_r08_007_2_20_sup_noboost/"
-
-
 class RunningAverage():
     """A simple class that maintains the running average of a quantity
 
