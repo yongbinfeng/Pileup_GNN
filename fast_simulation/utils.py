@@ -15,7 +15,6 @@ import os
 
 class RunningAverage():
     """A simple class that maintains the running average of a quantity
-
     Example:se
     ```
     loss_avg = RunningAverage()
@@ -117,7 +116,7 @@ def get_auc(truth, prediction):
     return auc
 
 
-def plot_roc(truths, predictions, legends, postfix="", saveTo=None, dir_name):
+def plot_roc(truths, predictions, legends, postfix="", dir_name='.', saveTo=None):
     """
     plot the roc based on the truth (label), and the list of predictions
     """
@@ -149,7 +148,7 @@ def plot_roc(truths, predictions, legends, postfix="", saveTo=None, dir_name):
     plt.savefig(dir_name + "roc_" + postfix + ".pdf", bbox_inches='tight')
     plt.close()
 
-def plot_roc_logscale(truths, predictions, legends, postfix="", saveTo=None, dir_name):
+def plot_roc_logscale(truths, predictions, legends, postfix="",dir_name='.',  saveTo=None):
     """
     plot the roc based on the truth (label), and the list of predictions
     """
@@ -179,10 +178,10 @@ def plot_roc_logscale(truths, predictions, legends, postfix="", saveTo=None, dir
     plt.yscale('log')
     plt.grid()
     #plt.legend(loc=4, fontsize=25)
-    plt.savefig(dir_name + "roc_logscale_cut" + postfix + ".pdf", bbox_inches='tight')
+    plt.savefig(dir_name + "/roc_logscale_cut" + postfix + ".pdf", bbox_inches='tight')
     plt.close()
 
-def plot_roc_lowerleft(truths, predictions, legends, postfix="", saveTo=None, dir_name):
+def plot_roc_lowerleft(truths, predictions, legends, postfix="", dir_name = '.',saveTo=None):
     """
     plot the roc based on the truth (label), and the list of predictions
     """
@@ -216,10 +215,10 @@ def plot_roc_lowerleft(truths, predictions, legends, postfix="", saveTo=None, di
     #plt.ylabel('True positive rate')
     plt.grid()
     #plt.legend(loc=4)
-    plt.savefig(dir_name + "lowerleft_roc_" + postfix + ".pdf", bbox_inches='tight')
+    plt.savefig(dir_name + "/lowerleft_roc_" + postfix + ".pdf", bbox_inches='tight')
     plt.close()
 
-def plot_hist2d(pts, weights, yname='Weight', postfix="", dir_name):
+def plot_hist2d(pts, weights, yname='Weight', postfix="", dir_name='.'):
     """
     plot the (puppi)Weights vs pt 2D histogram
     """
@@ -229,20 +228,22 @@ def plot_hist2d(pts, weights, yname='Weight', postfix="", dir_name):
     plt.xlabel('p_{T} [GeV]')
     plt.ylabel(yname)
     plt.grid()
-    plt.savefig(dir_name + "hist2d_pt_vs_" + yname.replace(' ', '') + "_" + postfix + ".pdf")
+    plt.savefig(dir_name + "/hist2d_pt_vs_" + yname.replace(' ', '') + "_" + postfix + ".pdf")
     plt.close()
 
 
-def plot_discriminator(epoch, vals, legends=['LV', 'PU'], postfix="", label="Discriminator", bins=50, xaxisrange=(0, 1), dir_name):
+def plot_discriminator(epoch, vals, legends=['LV', 'PU'], postfix="", label="Discriminator", bins=50, xaxisrange=(0, 1), dir_name='.'):
     """
     plot the distriminator distribution
     """
     sub_dir = "prob_plots"
-    parent_dir = "/home/liu2112/project/" + dir_name
+    parent_dir = "/home/li2657/Pileup_GNN-main/fast_simulation/" + dir_name
+
     path = os.path.join(parent_dir, sub_dir)
+
     isdir = os.path.isdir(path)
     if isdir == False:
-        os.mkdir(path)
+        os.mkdir(os.path.join(parent_dir, sub_dir))
 
     plt.figure()
     for i in range(len(vals)):
@@ -252,7 +253,7 @@ def plot_discriminator(epoch, vals, legends=['LV', 'PU'], postfix="", label="Dis
     plt.ylabel('A.U.')
     plt.xlabel(label + str(epoch))
     plt.legend(loc=4)
-    filename = dir_name + "prob_plots/Distriminator_" + postfix + "_" + str(epoch) +".png"
+    filename = dir_name + "/prob_plots/Distriminator_" + postfix + "_" + str(epoch) +".png"
     plt.savefig(filename)
     plt.close()
 
@@ -265,7 +266,7 @@ def plot_training(
         loss_graph_test, auc_graph_test, test_accuracy, auc_graph_test_puppi, test_accuracy_puppi,
         auc_graph_neu_train, auc_graph_train_puppi_neu,
         auc_graph_neu_test, auc_graph_test_puppi_neu,
-        postfix=".pdf", dir_name):
+        postfix=".pdf", dir_name='.'):
     # print(epochs_train)
     # print(epochs_test)
     # print(loss_graph)
@@ -279,7 +280,7 @@ def plot_training(
     plt.xlabel('Epochs')
     plt.ylabel('loss')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "loss_graph" + postfix)
+    plt.savefig(dir_name + "/loss_graph" + postfix)
     plt.close()
 
     # auc
@@ -300,7 +301,7 @@ def plot_training(
     plt.xlabel('Epochs')
     plt.ylabel('auc')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "auc_graph_train" + postfix)
+    plt.savefig(dir_name + "/auc_graph_train" + postfix)
     plt.close()
 
     # accuracy
@@ -314,7 +315,7 @@ def plot_training(
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "accuracy_graph" + postfix)
+    plt.savefig(dir_name + "/accuracy_graph" + postfix)
     plt.clf()
     plt.close()
 
@@ -322,7 +323,7 @@ def plot_training_fullsim(
         epochs_train, epochs_test, loss_graph_train,
         loss_graph, auc_graph_train, train_accuracy, auc_graph_train_puppi, train_accuracy_puppi,
         loss_graph_test, auc_graph_test, test_accuracy, auc_graph_test_puppi, test_accuracy_puppi,
-        postfix=".pdf", dir_name):
+        postfix=".pdf", dir_name='.'):
     # print(epochs_train)
     # print(epochs_test)
     # print(loss_graph)
@@ -336,7 +337,7 @@ def plot_training_fullsim(
     plt.xlabel('Epochs')
     plt.ylabel('loss')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "loss_graph" + postfix)
+    plt.savefig(dir_name + "/loss_graph" + postfix)
     plt.close()
 
     # auc
@@ -350,7 +351,7 @@ def plot_training_fullsim(
     plt.xlabel('Epochs')
     plt.ylabel('auc')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "auc_graph_train" + postfix)
+    plt.savefig(dir_name + "/auc_graph_train" + postfix)
     plt.close()
 
     # accuracy
@@ -364,7 +365,7 @@ def plot_training_fullsim(
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "accuracy_graph" + postfix)
+    plt.savefig(dir_name + "/accuracy_graph" + postfix)
     plt.clf()
     plt.close()
 
@@ -378,7 +379,7 @@ def plot_testing(epochs_test,
     plt.xlabel('Epochs')
     plt.ylabel('loss')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "loss_graph" + postfix)
+    plt.savefig(dir_name + "/loss_graph" + postfix)
     plt.close()
 
     # auc
@@ -389,7 +390,7 @@ def plot_testing(epochs_test,
     plt.xlabel('Epochs')
     plt.ylabel('auc')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "auc_graph_train" + postfix)
+    plt.savefig(dir_name + "/auc_graph_train" + postfix)
     plt.close()
 
     # accuracy
@@ -400,7 +401,7 @@ def plot_testing(epochs_test,
     plt.xlabel('Epochs')
     plt.ylabel('Accuracy')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "accuracy_graph" + postfix)
+    plt.savefig(dir_name + "/accuracy_graph" + postfix)
     plt.clf()
     plt.close()
 
@@ -469,7 +470,7 @@ def plot_kinematics(dataset, dir_name):
     plt.ylabel('A.U.')
     plt.xlabel('eta')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "eta.pdf")
+    plt.savefig(dir_name + "/eta.pdf")
     plt.close()
 
     plt.figure()
@@ -478,7 +479,7 @@ def plot_kinematics(dataset, dir_name):
     plt.ylabel('A.U.')
     plt.xlabel('phi')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "phi.pdf")
+    plt.savefig(dir_name + "/phi.pdf")
     plt.close()
 
     plt.figure()
@@ -487,7 +488,7 @@ def plot_kinematics(dataset, dir_name):
     plt.ylabel('A.U.')
     plt.xlabel('fromLVs')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "fromLVs.pdf")
+    plt.savefig(dir_name + "/fromLVs.pdf")
     plt.close()
 
     plt.figure()
@@ -496,7 +497,7 @@ def plot_kinematics(dataset, dir_name):
     plt.ylabel('A.U.')
     plt.xlabel('charge')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "charge.pdf")
+    plt.savefig(dir_name + "/charge.pdf")
     plt.close()
 
     plt.figure()
@@ -505,16 +506,15 @@ def plot_kinematics(dataset, dir_name):
     plt.ylabel('A.U.')
     plt.xlabel('weights')
     plt.legend(loc=4)
-    plt.savefig(dir_name + "weights.pdf")
+    plt.savefig(dir_name + "/weights.pdf")
     plt.close()
 
 
-def make_gif(figures, postfix="Train", dir_name):
+def make_gif(figures, postfix="Train", dir_name='.'):
     """
     make the fig based on the list of figures
     """
-    with imageio.get_writer(dir_name + 'result_' + postfix + ".gif") as writer:
+    with imageio.get_writer(dir_name + '/result_' + postfix + ".gif") as writer:
         for fig in figures:
             image = imageio.imread(fig)
             writer.append_data(image)
-
