@@ -46,15 +46,16 @@ You can specify arguments for training, or it will follow the default sets in th
 *Fast simulation dataset:* Training can be on both supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. 
 - Semi-supervised training: in `/fast_simulation` directory, run
 ```bash
- python train_fastsim_semi.py
+ python train_fastsim_semi.py --training_path 'your training graph directory' --validation_path 'your validation graph directory' --save_dir 'the dirctory you wish save all the results to'
  ``` 
+ Note that, the full path would be the 'parent direcotory' mentioned above concatenate with the --save_dir. 
  For example, if you want to train on PU80 with 2 layers of gated model with 20 dimension. Run 
  ```bash
- python train_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 80
+ python train_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 80 --validation_path ... --training_path ... --save_dir ...
  ``` 
 - Supervised training: in `/real_simulation` directory, run 
 ```bash
- python train_fastsim_sup.py
+ python train_fastsim_sup.py --validation_path ... --training_path ... --save_dir ...
  ``` 
 
 *Real simulation dataset:* Training can only be in semi-supervised setting since there are no labels for neutral particles \
@@ -70,14 +71,14 @@ Specify the `testing_path` in arguments to load the constructed testing graphs a
 Testing can be done on both charged and neutral particles for semi-supervised learning or neutral particles for supervised learning.
 - Fast simulation: There are three testing files in `/fast_simulation` directory, `test_fastsim_semi.py` for semi-supervised, `test_fastsim_sup.py` for supervised and `general_test.py` if you want to compare the neutral performance of both supervised and semi-supervised training. Choose one of the three testing scheme. 
 ```bash
- python test_fastsim_sup.py
- python test_fastsim_semi.py
- python general_test.py
+ python test_fastsim_sup.py --testing_path ... --load_dir ...
+ python test_fastsim_semi.py --testing_path ... --load_dir ...
+ python general_test.py --testing_path ... --load_dir_semi ... --load_dir_sup ...
  ``` 
  The arguments for testing is the same as training. You should specify the arguments based on the model you want to test and the `pulevel` you want to test on.
  For example, the model you are want to test a semi-supervised 2\*20 gated model on nPU=140, then you can run
  ```bash
- python test_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 140
+ python test_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 140 --testing_path ... --load_dir ...
  ``` 
  
 ## Saved models ##
