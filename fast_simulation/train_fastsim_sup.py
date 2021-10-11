@@ -162,9 +162,9 @@ def train(dataset, dataset_validation, args, batchsize):
             if count_event % 100 == 0:
                 training_loss, train_acc, train_auc, train_puppi_acc, train_puppi_auc, train_fig_name = test(training_loader,
                                                                                                              model, 0,
-                                                                                                             count_event)
+                                                                                                             count_event, args)
                 valid_loss, valid_acc, valid_auc, valid_puppi_acc, valid_puppi_auc, valid_fig_name = test(validation_loader, model, 1,
-                                                                                                    count_event)
+                                                                                                    count_event, args)
 
                 #epochs_train.append(count_event)
                 epochs_valid.append(count_event)
@@ -221,10 +221,9 @@ def train(dataset, dataset_validation, args, batchsize):
                                 loss_graph, auc_graph_train, train_accuracy, auc_graph_train_puppi,
                                 train_accuracy_puppi,
                                 loss_graph_valid, auc_graph_valid, valid_accuracy, auc_graph_valid_puppi,
-                                valid_accuracy_puppi,
-                                )
+                                valid_accuracy_puppi, args.save_dir)
 
-def test(loader, model, indicator, epoch):
+def test(loader, model, indicator, epoch, args):
     if indicator == 0:
         postfix = 'Train'
     elif indicator == 1:
@@ -297,15 +296,15 @@ def test(loader, model, indicator, epoch):
     utils.plot_roc([label_all_chg, label_all_chg],
                    [pred_all_chg, puppi_all_chg],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_test")
+                   postfix=postfix + "_test", args.save_dir)
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0]],
                                                    legends=['LV Neutral', 'PU Neutral'],
-                                                   postfix=postfix + "_prediction", label='Prediction')
+                                                   postfix=postfix + "_prediction", label='Prediction', args.save_dir)
     fig_name_puppi = utils.plot_discriminator(epoch,
                                               [puppi_all_chg[label_all_chg == 1], puppi_all_chg[label_all_chg == 0]],
                                               legends=['LV Neutral', 'PU Neutral'],
-                                              postfix=postfix + "_puppi", label='PUPPI Weight')
+                                              postfix=postfix + "_puppi", label='PUPPI Weight', args.save_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, fig_name_prediction
 
