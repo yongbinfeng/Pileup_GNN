@@ -9,6 +9,7 @@ import pickle
 from scipy.spatial import distance
 import h5py
 from scipy import stats
+import argparse
 import copy
 import os
 
@@ -21,10 +22,13 @@ def arg_parse():
                         help='deltaR for connecting particles when building the graph')
     parser.add_argument('--num_events', type=int,
                         help='number of events to construct graphs')
+    parser.add_argument('--start_event', type=int,
+                        help='which event to start constructing graphs')
 
 
     parser.set_defaults(deltaR=0.8)
     parser.set_defaults(num_events=3000)
+    parser.set_defaults(start_event=10)
     return parser.parse_args()
 
 def cal_Median_LeftRMS(x):
@@ -54,18 +58,18 @@ def buildConnections(eta, phi, deltaR):
     return edge_source, edge_target
 
 
-def prepare_dataset(num_event):
+def prepare_dataset(num_event, start_event, deltaR):
     num_file = max(int(num_event / 100), 1)
     particles = []
     count = 0
-    event_index = 0
+    event_index = start_event
     while count < num_file:
         if count == num_file - 1:
             cur_num_event = num_event - count * 100
         else:
             cur_num_event = 100
 
-        filepath = "./dataset/pileup/PU80/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
+        filepath = "./ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
                    + str(event_index) + ".h5"
 
         j = event_index
@@ -74,7 +78,7 @@ def prepare_dataset(num_event):
                 break
             else:
                 j += 1
-                filepath = "./dataset/pileup/PU80/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
+                filepath = "./ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent/ZnunuPlusJet_13TeV_80PU_withUnderlyingEvent_" \
                            + str(j) + ".h5"
 
         count += 1
@@ -134,7 +138,7 @@ def prepare_dataset(num_event):
         # calculate deltaR
         eta = event[:, 5:6]
         phi = event[:, 6:7]
-        edge_source, edge_target = buildConnections(eta, phi, args.deltaR)
+        edge_source, edge_target = buildConnections(eta, phi, deltaR)
         edge_index = torch.tensor([edge_source, edge_target], dtype=torch.long)
         print("done!!")
 
@@ -173,7 +177,7 @@ def prepare_dataset(num_event):
 def main():
     args = arg_parse()
     start = timer()
-    dataset = prepare_dataset(args.num_events)
+    dataset = prepare_dataset(args.num_events, args.start_event, args.deltaR)
 
     with open("dataset_fastsim" + str(args.num_events), "wb") as fp:
         pickle.dump(dataset, fp)
