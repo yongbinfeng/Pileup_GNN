@@ -130,11 +130,11 @@ def test(loader, model, args, epoch):
             break
         with torch.no_grad():
             num_feature = data.num_feature_actual[0].item()
-            #num_mask = data.num_mask[0]
+            # num_mask = data.num_mask[0]
             # we mask 5 times for charged particles, when evaluation we can just sum to get all the mask
             test_mask = data.x[:, num_feature]
 
-            data.x = torch.cat((data.x[:, 0:num_feature],test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
+            data.x = torch.cat((data.x[:, 0:num_feature], test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
             data = data.to(device)
             # max(dim=1) returns values, indices tuple; only need indices
             _, pred = model.forward(data)
@@ -152,8 +152,7 @@ def test(loader, model, args, epoch):
                 label_all = label
                 x_all = data.x
 
-
-            #test_mask = data.x[:, test_mask_index]
+            # test_mask = data.x[:, test_mask_index]
             mask_neu = data.mask_neu[:, 0]
 
             if test_mask_all != None:
@@ -162,7 +161,6 @@ def test(loader, model, args, epoch):
             else:
                 test_mask_all = test_mask
                 mask_all_neu = mask_neu
-
 
             label_neu = label[mask_neu == 1].cpu().detach().numpy()
             puppi_neu = puppi[mask_neu == 1].cpu().detach().numpy()
@@ -207,28 +205,27 @@ def test(loader, model, args, epoch):
     acc_neu = utils.get_acc(label_all_neu, pred_all_neu)
     acc_neu_puppi = utils.get_acc(label_all_neu, puppi_all_neu)
 
-
     utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
                    [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
                    legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal", args.load_dir)
+                   postfix=postfix + "_testfinal", dir_name = args.load_dir)
 
     utils.plot_roc_logscale([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-                   [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-                   legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                   postfix=postfix + "_testfinal", args.load_dir)
+                            [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
+                            legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+                            postfix=postfix + "_testfinal", dir_name = args.load_dir)
 
     utils.plot_roc_lowerleft([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-                       [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-                       legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-                       postfix=postfix + "_testfinal", args.load_dir)
+                             [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
+                             legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+                             postfix=postfix + "_testfinal", dir_name = args.load_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
                                                     pred_all_neu[label_all_neu == 1],
                                                     pred_all_neu[label_all_neu == 0]],
                                                    legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
-                                                   postfix=postfix + "_prediction", label='Prediction', args.load_dir)
+                                                   postfix=postfix + "_prediction", label='Prediction', dir_name = args.load_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, acc_neu, auc_neu, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
 
@@ -249,11 +246,11 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                 num_select_PU = min(PU_index.shape[0], num_select_PU)
 
             # generate the index for LV and PU samples for training mask
-            #gen_index_LV = random.sample(range(LV_index.shape[0]), num_select_LV)
-            selected_LV_train = LV_index[(num*num_select_LV):((num+1)*num_select_LV)]
+            # gen_index_LV = random.sample(range(LV_index.shape[0]), num_select_LV)
+            selected_LV_train = LV_index[(num * num_select_LV):((num + 1) * num_select_LV)]
 
-            #gen_index_PU = random.sample(range(PU_index.shape[0]), num_select_PU)
-            selected_PU_train = PU_index[(num*num_select_PU):((num+1)*num_select_PU)]
+            # gen_index_PU = random.sample(range(PU_index.shape[0]), num_select_PU)
+            selected_PU_train = PU_index[(num * num_select_PU):((num + 1) * num_select_PU)]
 
             training_mask = np.concatenate((selected_LV_train, selected_PU_train), axis=None)
             # print(training_mask)
@@ -263,13 +260,13 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
             mask_training_cur[[training_mask.tolist()]] = 1
             mask_training[:, num] = mask_training_cur
 
-
         x_concat = torch.cat((original_feature, mask_training), 1)
         graph.x = x_concat
 
         # mask the puppiWeight as default Neutral(here puppiweight is actually fromLV in ggnn dataset)
         puppiWeight_default_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
-                                    torch.zeros(graph.num_nodes, 1), torch.ones(graph.num_nodes, 1)), 1)
+                                                          torch.zeros(graph.num_nodes, 1),
+                                                          torch.ones(graph.num_nodes, 1)), 1)
 
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
 
@@ -302,9 +299,9 @@ def generate_neu_mask(dataset):
 def main():
     args = arg_parse()
     print(args.model_type)
-    
+
     with open(args.testing_path, "rb") as fp:
-                dataset_test = pickle.load(fp)
+        dataset_test = pickle.load(fp)
 
     generate_neu_mask(dataset_test)
 
