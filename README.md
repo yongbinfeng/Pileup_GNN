@@ -22,9 +22,13 @@ pip3 install -r requirements.txt
 However, this doesn't include torch_geometric related packeages. Tutorials about how to install torch_geometric could be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (Note: please check CUDA version before installation)
 
 ## Note ##
+- Don't forget to change the directory of your downloaded raw datasets in prepare dataset files. \
+(line 75, 84 in `prepare_dataset_fastsim.py` and line 20 in `prepare_dataset_realsim.py`)
+- Also, note when running prepare dataset files for graph construction. The graphs will be saved to the directory that you run the code. If you want to save the graph to another directory, specify the full path plus name using args.name argument.
 - Don't forget to change the parent directory in training and testing files. \
 (second line of `train` function in `general_test.py`, `test_fastsim_semi.py`, `test_fastsim_sup.py`, `train_fastsim_semi.py` and `train_fastsim_sup.py`)\
 (second line of `plot_discriminator` function in `utils.py`)
+
 
 ## Construct graphs ##
 - In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
