@@ -259,7 +259,7 @@ def train(dataset, dataset_validation, args, batchsize):
                         loss_graph_valid, auc_graph_valid, valid_accuracy_neu, auc_graph_valid_puppi,
                         valid_accuracy_puppi_neu,
                         auc_graph_neu_train, auc_graph_train_puppi_neu,
-                        auc_graph_neu_valid, auc_graph_valid_puppi_neu, args.save_dir
+                        auc_graph_neu_valid, auc_graph_valid_puppi_neu, dir_name = args.save_dir
                         )
 
 
