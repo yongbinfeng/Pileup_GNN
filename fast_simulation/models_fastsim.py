@@ -9,8 +9,8 @@ from math import pi
 
 class GNNStack(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, args):
-        # since we do not need phi, eta and puppiweight in x
-        input_dim = input_dim - 3
+        # since we do not need phi and eta in x
+        input_dim = input_dim - 2
 
         super(GNNStack, self).__init__()
         conv_model = self.build_conv_model(args.model_type)
@@ -51,9 +51,8 @@ class GNNStack(torch.nn.Module):
         phi_pos = 1
         eta = x[:, eta_pos]
         phi = x[:, phi_pos]
-        # puppiweight
-        pw = x[:, -1].view(-1, 1)
-        x = x[:, 2:-1]
+        #x = x[:, 2:-1]
+        x = x[:, 2:]
 
         #x = self.before_mp(x)
 

@@ -13,6 +13,7 @@ import random
 import pickle
 from timeit import default_timer as timer
 from tqdm import tqdm
+import math
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
@@ -36,8 +37,6 @@ def arg_parse():
                         help='Number of training epochs')
     parser.add_argument('--pulevel', type=int,
                         help='pileup level for the dataset')
-    parser.add_argument('--deltar', type=float,
-                        help='deltaR for connecting particles when building the graph')
     parser.add_argument('--training_path', type=str, required=True,
                         help='path for training graphs')
     parser.add_argument('--validation_path', type=str, required=True,
@@ -51,13 +50,9 @@ def arg_parse():
                         hidden_dim=20,
                         dropout=0,
                         opt='adam',
-                        # opt_scheduler='step',
-                        # opt_decay_step=100,
-                        # opt_decay_rate=0.001,
                         weight_decay=0,
                         lr=0.001,
-                        pulevel=20,
-                        deltar=0.4
+                        pulevel=80,
                         )
 
     return parser.parse_args()
@@ -65,7 +60,7 @@ def arg_parse():
 
 def train(dataset, dataset_validation, args, batchsize):
     directory = args.save_dir
-    parent_dir = "/home/li2657/Pileup_GNN-main/fast_simulation"
+    parent_dir = "/home/feng356/depot/Pileup_GNN/datasets/"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
 
@@ -80,8 +75,8 @@ def train(dataset, dataset_validation, args, batchsize):
         num_select_LV = 3
         num_select_PU = 45
     elif args.pulevel == 80:
-        num_select_LV = 10
-        num_select_PU = 160
+        num_select_LV = 5
+        num_select_PU = 50
     else:
         num_select_LV = 6
         num_select_PU = 282
@@ -97,6 +92,9 @@ def train(dataset, dataset_validation, args, batchsize):
     scheduler, opt = utils.build_optimizer(args, model.parameters())
 
     # train
+    #
+    # todo: this bunch of lists can be replaced with a small class or so
+    #
     epochs_train = []
     epochs_valid = []
     loss_graph = []
@@ -140,11 +138,11 @@ def train(dataset, dataset_validation, args, batchsize):
         for batch in training_loader:
             count_event += 1
             epochs_train.append(count_event)
-            cur_loss = 0
+            cur_loss = 0.
             feature_with_mask = batch.x
             for iter in range(rotate_mask):
-                # print("h")
                 num_feature = batch.num_feature_actual[0].item()
+                #print("num_feature ", num_feature)
                 batch.x = torch.cat((feature_with_mask[:, 0:num_feature],
                                      feature_with_mask[:, (num_feature + iter)].view(-1, 1),
                                      feature_with_mask[:, -num_feature:]), 1)
@@ -154,6 +152,7 @@ def train(dataset, dataset_validation, args, batchsize):
 
                 label = batch.y
                 train_mask = batch.x[:, num_feature]
+                #print("train mask: ", torch.sum(train_mask))
                 if train_mask_all != None:
                     train_mask_all = torch.cat((train_mask_all, train_mask), 0)
                 else:
@@ -164,15 +163,23 @@ def train(dataset, dataset_validation, args, batchsize):
                 label = label.view(-1, 1)
                 pred = pred[train_mask == 1]
 
+                #print("pred: ", pred)
+                #print("label: ", label)
                 loss = model.loss(pred, label)
                 cur_loss += loss.item()
                 opt.zero_grad()
                 loss.backward()
                 opt.step()
-
+            
+            if math.isnan(cur_loss):
+                print("cur_loss ", cur_loss)
+                print("label: ", label)
+                print("pred: ", pred)
             cur_loss = cur_loss / rotate_mask
             loss_graph.append(cur_loss)
+            #print("cur_loss ", cur_loss)
             loss_avg.update(cur_loss)
+            #print("loss_avg ", loss_avg())
             t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
             t.update()
 
@@ -220,7 +227,7 @@ def train(dataset, dataset_validation, args, batchsize):
 
                 if valid_loss >= lowest_valid_loss:
                     print(
-                        "valid loss increase at event " + str(count_event) + "with validation loss " + str(valid_loss))
+                        "valid loss increase at event " + str(count_event) + " with validation loss " + str(valid_loss))
                     if last_steady_event == count_event - 100:
                         converge_num_event += 1
                         if converge_num_event > 30:
@@ -231,7 +238,7 @@ def train(dataset, dataset_validation, args, batchsize):
                     else:
                         converge_num_event = 1
                         last_steady_event = count_event
-                    print("converge num event " + str(converge_num_event))
+                    #print("converge num event " + str(converge_num_event))
                 else:
                     print("lowest valid loss " + str(valid_loss))
                     lowest_valid_loss = valid_loss
@@ -393,10 +400,10 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
 
             # generate the index for LV and PU samples for training mask
             # gen_index_LV = random.sample(range(LV_index.shape[0]), num_select_LV)
-            selected_LV_train = LV_index[(num * num_select_LV):((num + 1) * num_select_LV)]
+            selected_LV_train = np.take(LV_index, range(num * num_select_LV, (num + 1) * num_select_LV), mode='wrap')
 
             # gen_index_PU = random.sample(range(PU_index.shape[0]), num_select_PU)
-            selected_PU_train = PU_index[(num * num_select_PU):((num + 1) * num_select_PU)]
+            selected_PU_train = np.take(PU_index, range(num * num_select_PU, (num + 1) * num_select_PU), mode='wrap')
 
             training_mask = np.concatenate((selected_LV_train, selected_PU_train), axis=None)
             # print(training_mask)
@@ -413,13 +420,11 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
         puppiWeight_default_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
                                                           torch.zeros(graph.num_nodes, 1),
                                                           torch.ones(graph.num_nodes, 1)), 1)
-
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
 
-        # -3 is for one hot encoding of fromLV; -1 is for final puppiweight; want to have eta, phi, pt as original
+        # replace the one-hot encoded puppi weights
         default_data_training = torch.cat(
-            (original_feature[:, 0:(graph.num_feature_actual - 3 - 1)], puppiWeight_default_one_hot_training,
-             original_feature[:, -1].view(-1, 1)), 1)
+            (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
 
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
@@ -444,7 +449,7 @@ def generate_neu_mask(dataset):
 
 def main():
     args = arg_parse()
-    print(args.model_type)
+    print("model type: ", args.model_type)
 
     # load the constructed graphs
     with open(args.training_path, "rb") as fp:

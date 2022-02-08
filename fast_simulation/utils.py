@@ -6,7 +6,8 @@ import imageio
 import matplotlib.pyplot as plt
 import mplhep as hep
 mpl.use("pdf")
-hep.set_style(hep.style.ROOT)
+#hep.set_style(hep.style.ROOT)
+hep.style.use(hep.style.ROOT)
 import numpy as np
 import pickle
 from copy import deepcopy
@@ -25,11 +26,11 @@ class RunningAverage():
     """
 
     def __init__(self):
-        self.steps = 0
-        self.total = 0
+        self.steps = 0.
+        self.total = 0.
 
     def update(self, val):
-        self.total += val
+        self.total += float(val)
         self.steps += 1
 
     def __call__(self):
@@ -237,7 +238,7 @@ def plot_discriminator(epoch, vals, legends=['LV', 'PU'], postfix="", label="Dis
     plot the distriminator distribution
     """
     sub_dir = "prob_plots"
-    parent_dir = "/home/li2657/Pileup_GNN-main/fast_simulation/" + dir_name
+    parent_dir = "./" + dir_name
 
     path = os.path.join(parent_dir, sub_dir)
 
