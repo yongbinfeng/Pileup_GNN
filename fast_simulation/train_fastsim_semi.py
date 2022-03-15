@@ -60,7 +60,8 @@ def arg_parse():
 
 def train(dataset, dataset_validation, args, batchsize):
     directory = args.save_dir
-    parent_dir = "/home/feng356/depot/Pileup_GNN/datasets/"
+    #parent_dir = "/home/feng356/depot/Pileup_GNN/datasets/"
+    parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/datasets/"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
 
@@ -392,6 +393,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
         np.random.shuffle(PU_index)
         original_feature = graph.x[:, 0:graph.num_feature_actual]
 
+        pf_dz_training = torch.zeros(graph.num_nodes, num_mask)
         mask_training = torch.zeros(graph.num_nodes, num_mask)
         for num in range(num_mask):
             if LV_index.shape[0] < num_select_LV or PU_index.shape[0] < num_select_PU:
@@ -422,10 +424,18 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                                                           torch.ones(graph.num_nodes, 1)), 1)
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
 
-        # replace the one-hot encoded puppi weights
-        default_data_training = torch.cat(
-            (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
+        ##create an array with zero values for PF_dz
+        pf_dz_training_cur = torch.zeros(graph.num_nodes)
+        pf_dz_training_cur[[training_mask.tolist()]] = 1
+        pf_dz_training[:, num] = pf_dz_training_cur
 
+        # replace the one-hot encoded puppi weights and PF_dz
+        #default_data_training = torch.cat(
+         #   (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
+        
+        default_data_training = torch.cat(
+             (original_feature[:, 0:(graph.num_feature_actual - 4)], puppiWeight_default_one_hot_training, pf_dz_training), 1)
+        
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
         graph.num_mask = num_mask
