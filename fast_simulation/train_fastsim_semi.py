@@ -423,18 +423,18 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                                                           torch.zeros(graph.num_nodes, 1),
                                                           torch.ones(graph.num_nodes, 1)), 1)
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
+        
+        pf_dz_training_test=torch.clone(original_feature[:,5:6])
+        pf_dz_training_test[[training_mask.tolist()],0]=0
+                
 
-        ##create an array with zero values for PF_dz
-        pf_dz_training_cur = torch.zeros(graph.num_nodes)
-        pf_dz_training_cur[[training_mask.tolist()]] = 1
-        pf_dz_training[:, num] = pf_dz_training_cur
 
         # replace the one-hot encoded puppi weights and PF_dz
         #default_data_training = torch.cat(
          #   (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
         
         default_data_training = torch.cat(
-             (original_feature[:, 0:(graph.num_feature_actual - 4)], puppiWeight_default_one_hot_training, pf_dz_training), 1)
+             (original_feature[:, 0:(graph.num_feature_actual - 4)], puppiWeight_default_one_hot_training, pf_dz_training_test), 1)
         
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
