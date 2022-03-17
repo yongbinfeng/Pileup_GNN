@@ -424,7 +424,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                                                           torch.ones(graph.num_nodes, 1)), 1)
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
         
-        pf_dz_training_test=torch.clone(original_feature[:,5:6])
+        pf_dz_training_test=torch.clone(original_feature[:,4:5])
         pf_dz_training_test[[training_mask.tolist()],0]=0
                 
 
@@ -434,7 +434,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
          #   (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
         
         default_data_training = torch.cat(
-             (original_feature[:, 0:(graph.num_feature_actual - 4)], puppiWeight_default_one_hot_training, pf_dz_training_test), 1)
+             (original_feature[:, 0:(graph.num_feature_actual - 6)],pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
         
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
