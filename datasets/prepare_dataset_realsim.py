@@ -18,7 +18,8 @@ np.random.seed(0)
 def gen_dataframe(num_event, num_start=0):
     print(f"reading events from {num_start} to {num_start+num_event}")
     tree = uproot.open(
-        "/depot/cms/private/users/feng356/SSLPUPPI_fullSim/output_1.root")["Events"]
+        #"/depot/cms/private/users/feng356/SSLPUPPI_fullSim/output_1.root")["Events"]
+         "/depot/cms/private/users/gpaspala/output_1.root")["Events"]
     pfcands = tree.arrays(
         tree.keys('PF_*'), entry_start=num_start, entry_stop=num_event + num_start)
 
