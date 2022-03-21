@@ -408,7 +408,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
             selected_PU_train = np.take(PU_index, range(num * num_select_PU, (num + 1) * num_select_PU), mode='wrap')
 
             training_mask = np.concatenate((selected_LV_train, selected_PU_train), axis=None)
-            # print(training_mask)
+            #print(training_mask)
 
             # construct mask vector for training and testing
             mask_training_cur = torch.zeros(graph.num_nodes)
@@ -424,10 +424,16 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                                                           torch.ones(graph.num_nodes, 1)), 1)
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
         
-        pf_dz_training_test=torch.clone(original_feature[:,4:5])
+        pf_dz_training_test=torch.clone(original_feature[:,6:7])
+        #print ("pf_dz_training_test: ", pf_dz_training_test)
+
         pf_dz_training_test[[training_mask.tolist()],0]=0
                 
-
+        #print ("pf_dz_training_test: ", pf_dz_training_test)
+        #print ("puppiWeight_default_one_hot_training size: ", puppiWeight_default_one_hot_training.size())
+        #print ("pf_dz_training_test size: ", pf_dz_training_test.size())
+        
+        #print ("pf_dz_training_test: ", pf_dz_training_test)
 
         # replace the one-hot encoded puppi weights and PF_dz
         #default_data_training = torch.cat(
