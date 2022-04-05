@@ -100,7 +100,7 @@ def prepare_dataset(num_event, num_start=0):
         pdgId = pdgId.type(torch.long)
         pdgId_one_hot = torch.nn.functional.one_hot(pdgId)
         pdgId_one_hot = pdgId_one_hot.type(torch.float32)
-        #print (pdgId)
+        #print ("pdgID_one_hot", pdgId_one_hot)
         # set the neutral puppiWeight to default
         node_features[[Neutral_index.tolist()], 4] = 2
         puppiWeight = node_features[:, 4]
@@ -108,6 +108,7 @@ def prepare_dataset(num_event, num_start=0):
         puppiWeight_one_hot = torch.nn.functional.one_hot(puppiWeight)
         puppiWeight_one_hot = puppiWeight_one_hot.type(torch.float32)
         columnsNamesArr = df_pfcands.columns.values
+        #print ("puppiWeight_one_hot", puppiWeight_one_hot)
         #if num ==0:
            #print("node_features[:,-1:]",node_features[:,-1:])
            #print("node_features:", node_features[:,5:6])       

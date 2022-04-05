@@ -71,6 +71,7 @@ def train(dataset, dataset_validation, args, batchsize):
     start = timer()
 
     rotate_mask = 5
+    #rotate_mask = 2
     if args.pulevel == 20:
         rotate_mask = 8
         num_select_LV = 3
@@ -263,6 +264,12 @@ def train(dataset, dataset_validation, args, batchsize):
                         auc_graph_neu_valid, auc_graph_valid_puppi_neu, dir_name = args.save_dir
                         )
 
+    #utils.plot_training(epochs_train, epochs_valid, loss_graph_train,
+     #                   loss_graph, auc_graph_train, train_accuracy_neu, 
+     #                   loss_graph_valid, auc_graph_valid, valid_accuracy_neu,
+     #                   auc_graph_neu_train, 
+     #                   auc_graph_neu_valid, dir_name = args.save_dir
+     #                   )
 
 def test(loader, model, indicator, epoch, args):
     if indicator == 0:
@@ -362,10 +369,16 @@ def test(loader, model, indicator, epoch, args):
     acc_neu = utils.get_acc(label_all_neu, pred_all_neu)
     acc_neu_puppi = utils.get_acc(label_all_neu, puppi_all_neu)
 
-    utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-                   [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-                   legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+    #utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
+     #              [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
+     #              legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+     #              postfix=postfix + "_test", dir_name=args.save_dir)
+
+    utils.plot_roc([label_all_chg, label_all_neu],
+                   [pred_all_chg,  pred_all_neu ],
+                   legends=["prediction Chg", "prediction Neu"],
                    postfix=postfix + "_test", dir_name=args.save_dir)
+
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
@@ -393,7 +406,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
         np.random.shuffle(PU_index)
         original_feature = graph.x[:, 0:graph.num_feature_actual]
 
-        pf_dz_training = torch.zeros(graph.num_nodes, num_mask)
+        #pf_dz_training = torch.zeros(graph.num_nodes, num_mask)
         mask_training = torch.zeros(graph.num_nodes, num_mask)
         for num in range(num_mask):
             if LV_index.shape[0] < num_select_LV or PU_index.shape[0] < num_select_PU:
@@ -424,11 +437,18 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                                                           torch.ones(graph.num_nodes, 1)), 1)
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
         
+        #mask the pdgID for charge particles
+        pdgId_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
+                                                          torch.zeros(graph.num_nodes, 1),
+                                                          torch.ones(graph.num_nodes, 1)), 1)       
+        pdgId_one_hot_training = pdgId_one_hot_training.type(torch.float32)
+
         pf_dz_training_test=torch.clone(original_feature[:,6:7])
         #print ("pf_dz_training_test: ", pf_dz_training_test)
-
-        pf_dz_training_test[[training_mask.tolist()],0]=0
-                
+        #print ("pf_dz_training_test: ", pf_dz_training_test.shape)
+        #pf_dz_training_test[[training_mask.tolist()],0]=0
+        pf_dz_training_test = torch.zeros(graph.num_nodes, 1)        
+        
         #print ("pf_dz_training_test: ", pf_dz_training_test)
         #print ("puppiWeight_default_one_hot_training size: ", puppiWeight_default_one_hot_training.size())
         #print ("pf_dz_training_test size: ", pf_dz_training_test.size())
@@ -439,8 +459,11 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
         #default_data_training = torch.cat(
          #   (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
         
+        #default_data_training = torch.cat(
+         #    (original_feature[:, 0:(graph.num_feature_actual - 4)],pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
+        ## add masked PdgID
         default_data_training = torch.cat(
-             (original_feature[:, 0:(graph.num_feature_actual - 4)],pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
+             (original_feature[:, 0:(graph.num_feature_actual - 7)],pdgId_one_hot_training, pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
         
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
