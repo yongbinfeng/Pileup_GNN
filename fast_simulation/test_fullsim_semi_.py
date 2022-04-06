@@ -13,6 +13,7 @@ import random
 import pickle
 from timeit import default_timer as timer
 from tqdm import tqdm
+import math
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
@@ -56,7 +57,7 @@ def arg_parse():
 def train(dataset_test, args, batchsize):
     directory = args.load_dir
     #parent_dir = "/home/liu2112/project"
-    parent_dir  = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/datasets/"
+    parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/fast_simulation/test"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
 
@@ -165,8 +166,8 @@ def test(loader, model, args, epoch):
 
             label_neu = label[mask_neu == 1].cpu().detach().numpy()
             puppi_neu = puppi[mask_neu == 1].cpu().detach().numpy()
-            cur_neu_puppi_auc = utils.get_auc(label_neu, puppi_neu)
-            auc_all_puppi.append(cur_neu_puppi_auc)
+            #cur_neu_puppi_auc = utils.get_auc(label_neu, puppi_neu)
+            #auc_all_puppi.append(cur_neu_puppi_auc)
 
             label = label[test_mask == 1]
             pred = pred[test_mask == 1]
@@ -206,26 +207,31 @@ def test(loader, model, args, epoch):
     acc_neu = utils.get_acc(label_all_neu, pred_all_neu)
     acc_neu_puppi = utils.get_acc(label_all_neu, puppi_all_neu)
 
-    utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-                   [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-                   legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+
+    utils.plot_roc([label_all_chg, label_all_neu],
+                   [pred_all_chg, pred_all_neu],
+                   legends=["prediction Chg", "prediction Neu"],
                    postfix=postfix + "_testfinal", dir_name = args.load_dir)
 
-    utils.plot_roc_logscale([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-                            [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-                            legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+    utils.plot_roc_logscale([label_all_chg, label_all_neu],
+                            [pred_all_chg, pred_all_neu],
+                            legends=["prediction Chg", "prediction Neu"],
                             postfix=postfix + "_testfinal", dir_name = args.load_dir)
+   
 
-    utils.plot_roc_lowerleft([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-                             [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-                             legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+
+    utils.plot_roc_lowerleft([label_all_chg, label_all_chg],
+                             [pred_all_chg, puppi_all_chg],
+                             legends=["prediction Chg", "prediction Neu"],
                              postfix=postfix + "_testfinal", dir_name = args.load_dir)
+
+
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
                                                     pred_all_neu[label_all_neu == 1],
                                                     pred_all_neu[label_all_neu == 0]],
-                                                   legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
+                                                    legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
                                                    postfix=postfix + "_prediction", label='Prediction', dir_name = args.load_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, acc_neu, auc_neu, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
@@ -271,10 +277,23 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
 
         puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
 
-        # -3 is for one hot encoding of fromLV; -1 is for final puppiweight; want to have eta, phi, pt as original
+
+        pdgId_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
+                                                         torch.zeros(graph.num_nodes, 1),
+                                                         torch.ones(graph.num_nodes, 1)), 1)       
+        pdgId_one_hot_training = pdgId_one_hot_training.type(torch.float32)
+
+        pf_dz_training_test=torch.clone(original_feature[:,6:7])
+        #print ("pf_dz_training_test: ", pf_dz_training_test)
+        #print ("pf_dz_training_test: ", pf_dz_training_test.shape)
+        #pf_dz_training_test[[training_mask.tolist()],0]=0
+        pf_dz_training_test = torch.zeros(graph.num_nodes, 1)        
+
+
         default_data_training = torch.cat(
-            (original_feature[:, 0:(graph.num_feature_actual - 3 - 1)], puppiWeight_default_one_hot_training,
-             original_feature[:, -1].view(-1, 1)), 1)
+             (original_feature[:, 0:(graph.num_feature_actual - 7)],pdgId_one_hot_training, pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
+
+
 
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
@@ -299,7 +318,7 @@ def generate_neu_mask(dataset):
 
 def main():
     args = arg_parse()
-    print(args.model_type)
+    print("model type: ", args.model_type)
 
     with open(args.testing_path, "rb") as fp:
         dataset_test = pickle.load(fp)

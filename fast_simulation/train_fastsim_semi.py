@@ -61,7 +61,7 @@ def arg_parse():
 def train(dataset, dataset_validation, args, batchsize):
     directory = args.save_dir
     #parent_dir = "/home/feng356/depot/Pileup_GNN/datasets/"
-    parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/datasets/"
+    parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/fast_simulation/"
     path = os.path.join(parent_dir, directory)
     isdir = os.path.isdir(path)
 
@@ -225,6 +225,7 @@ def train(dataset, dataset_validation, args, batchsize):
 
                 if valid_auc_neu > best_validation_auc:
                     best_validation_auc = valid_auc_neu
+                    print("model is saved in " +  path + "/best_valid_model.pt")
                     torch.save(model.state_dict(), path + "/best_valid_model.pt")
 
                 if valid_loss >= lowest_valid_loss:
@@ -369,10 +370,6 @@ def test(loader, model, indicator, epoch, args):
     acc_neu = utils.get_acc(label_all_neu, pred_all_neu)
     acc_neu_puppi = utils.get_acc(label_all_neu, puppi_all_neu)
 
-    #utils.plot_roc([label_all_chg, label_all_chg, label_all_neu, label_all_neu],
-     #              [pred_all_chg, puppi_all_chg, pred_all_neu, puppi_all_neu],
-     #              legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
-     #              postfix=postfix + "_test", dir_name=args.save_dir)
 
     utils.plot_roc([label_all_chg, label_all_neu],
                    [pred_all_chg,  pred_all_neu ],
