@@ -189,6 +189,11 @@ def main():
     dataset_train = prepare_dataset(num_events_train)
     with open("dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
         pickle.dump(dataset_train, fp)
+   
+    num_events_test=80 
+    dataset_test = prepare_dataset(num_events_test)   
+    with open("dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
+        pickle.dump(dataset_train, fp)
 
     num_events_valid = 50
     dataset_valid = prepare_dataset(num_events_valid, num_events_train)
