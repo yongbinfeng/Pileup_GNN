@@ -20,10 +20,14 @@ def gen_dataframe(num_event, num_start=0):
     tree = uproot.open(
         #"/depot/cms/private/users/feng356/SSLPUPPI_fullSim/output_1.root")["Events"]
          "/depot/cms/private/users/gpaspala/output_1.root")["Events"]
+    # read reco pf candidates and packed Gen particles
     pfcands = tree.arrays(
         tree.keys('PF_*'), entry_start=num_start, entry_stop=num_event + num_start)
+    genparts = tree.arrays(
+        tree.keys('packedGenPart_*'), entry_start=num_start, entry_stop=num_event + num_start)
 
     df_list = []
+    df_gen_list = []
     #
     # todo: this loop can probably be removed
     #
@@ -44,13 +48,24 @@ def gen_dataframe(num_event, num_start=0):
         #df_pfcands['PF_pt'] = np.log(df_pfcands['PF_pt'])
         df_list.append(df_pfcands)
 
-    return df_list
+    for i in range(num_event):
+        event = genparts[i]
+        # eliminate those with eta more than 2.5 and also neutrinos
+        selection = ((abs(event['packedGenPart_eta']) < 2.5) & (abs(event['packedGenPart_pdgId']) != 12) &  (abs(event['packedGenPart_pdgId']) != 14) & (abs(event['packedGenPart_pdgId']) != 16))
+        event = event[selection]
+        selected_features = ['packedGenPart_eta', 'packedGenPart_phi', 'packedGenPart_pt', 'packedGenPart_pdgId', 'packedGenPart_charge']
+        gen_chosen = event[selected_features]
+        df_genparts = ak.to_pandas(gen_chosen)
+        df_gen_list.append(df_genparts)
+
+
+    return df_list, df_gen_list
 
 
 def prepare_dataset(num_event, num_start=0):
     data_list = []
 
-    df_list = gen_dataframe(num_event, num_start)
+    df_list, df_gen_list = gen_dataframe(num_event, num_start)
 
     PTCUT = 0.5
 
@@ -139,6 +154,7 @@ def prepare_dataset(num_event, num_start=0):
         graph.Neutral_index = Neutral_index
         graph.Charge_index = Charge_index
         graph.num_classes = 2
+        graph.GenParts = df_gen_list[num]
         data_list.append(graph)
 
     return data_list
