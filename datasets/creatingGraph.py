@@ -22,9 +22,14 @@ def gen_dataframe(num_event, num_start=0):
     pfcands = tree.arrays(
         tree.keys('PF_*'), entry_start=num_start, entry_stop=num_event + num_start)
     
+    genparts= tree.arrays(
+        tree.keys('packedGenPart_*'), entry_start=num_start, entry_stop=num_event + num_start)
+ 
     print (tree.num_entries)
 
     df_list = []
+    df_gen_list = []
+
     #
     # todo: this loop can probably be removed
     #
@@ -45,13 +50,24 @@ def gen_dataframe(num_event, num_start=0):
         #df_pfcands['PF_pt'] = np.log(df_pfcands['PF_pt'])
         df_list.append(df_pfcands)
 
-    return df_list
+    for i in range(num_event):
+        event = genparts[i]
+        # eliminate those with eta more than 2.5 and also neutrinos
+        selection = ((abs(event['packedGenPart_eta']) < 2.5) & (abs(event['packedGenPart_pdgId']) != 12) &  (abs(event['packedGenPart_pdgId']) != 14) & (abs(event['packedGenPart_pdgId']) != 16))
+        event = event[selection]
+        selected_features = ['packedGenPart_eta', 'packedGenPart_phi', 'packedGenPart_pt', 'packedGenPart_pdgId', 'packedGenPart_charge']
+        gen_chosen = event[selected_features]
+        df_genparts = ak.to_pandas(gen_chosen)
+        df_gen_list.append(df_genparts)
+ 
+
+    return df_list, df_gen_list
 
     
 def prepare_dataset(num_event, num_start=0):
     data_list = []
 
-    df_list = gen_dataframe(num_event, num_start)
+    df_list, df_gen_list  = gen_dataframe(num_event, num_start)
 
     PTCUT = 0.5
 
@@ -157,7 +173,11 @@ def prepare_dataset(num_event, num_start=0):
        # print ("PF_charge", charge)
        # print ("PF_vertexChi2",vertexChi2)
         
-        
+        df_gencands =df_gen_list[num] 
+        gen_features = df_gencands.to_numpy()
+        gen_features = torch.from_numpy(gen_features)
+        gen_features = gen_features.type(torch.float32)
+            #gen_features = torch.cat((gen_features[:,0:4]),1)
 
         dist_phi = distance.cdist(phi, phi, 'cityblock')
         # deal with periodic feature of phi
@@ -178,6 +198,8 @@ def prepare_dataset(num_event, num_start=0):
         graph.Neutral_index = Neutral_index
         graph.Charge_index = Charge_index
         graph.num_classes = 2
+        graph.GenPart_nump = gen_features
+        graph.GenParts = df_gen_list[num]
         data_list.append(graph)
 
     return data_list
@@ -190,8 +212,8 @@ def main():
     with open("dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
         pickle.dump(dataset_train, fp)
    
-    num_events_test=80 
-    dataset_test = prepare_dataset(num_events_test)   
+    num_events_test=80
+    dataset_test = prepare_dataset(num_events_test)
     with open("dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
         pickle.dump(dataset_train, fp)
 
@@ -200,6 +222,10 @@ def main():
     with open("dataset_graph_puppi_" + str(num_events_valid), "wb") as fp:
         pickle.dump(dataset_valid, fp)
 
+    num_events_valid = 1000
+    dataset_valid = prepare_dataset(num_events_valid, num_events_train)
+    with open("dataset_graph_puppi_" + str(num_events_valid), "wb") as fp:
+        pickle.dump(dataset_valid, fp)
 
     end = timer()
     program_time = end - start
