@@ -21,14 +21,15 @@ def gen_dataframe(num_event, num_start=0):
         "/depot/cms/private/users/gpaspala/output_1.root")["Events"]
     pfcands = tree.arrays(
         tree.keys('PF_*'), entry_start=num_start, entry_stop=num_event + num_start)
-    
+
     genparts= tree.arrays(
         tree.keys('packedGenPart_*'), entry_start=num_start, entry_stop=num_event + num_start)
- 
+
     print (tree.num_entries)
 
     df_list = []
     df_gen_list = []
+    df_pf_raw_list = []
 
     #
     # todo: this loop can probably be removed
@@ -41,14 +42,17 @@ def gen_dataframe(num_event, num_start=0):
         #
         # todo: add more features here
         #
-        selected_features = ['PF_eta', 'PF_phi', 'PF_pt', 
+        selected_features = ['PF_eta', 'PF_phi', 'PF_pt',
                              'PF_pdgId', 'PF_charge', 'PF_puppiWeight','PF_dz']
         event_nPF = ak.to_numpy(event['PF_eta']).size
         pf_chosen = event[selected_features]
 
         df_pfcands = ak.to_pandas(pf_chosen)
+
         #df_pfcands['PF_pt'] = np.log(df_pfcands['PF_pt'])
         df_list.append(df_pfcands)
+        df_pf_raw_list.append(df_pfcands)
+
 
     for i in range(num_event):
         event = genparts[i]
@@ -59,15 +63,15 @@ def gen_dataframe(num_event, num_start=0):
         gen_chosen = event[selected_features]
         df_genparts = ak.to_pandas(gen_chosen)
         df_gen_list.append(df_genparts)
- 
 
-    return df_list, df_gen_list
 
-    
+    return df_list, df_gen_list,df_pf_raw_list
+
+
 def prepare_dataset(num_event, num_start=0):
     data_list = []
 
-    df_list, df_gen_list  = gen_dataframe(num_event, num_start)
+    df_list, df_gen_list ,df_pf_raw_list = gen_dataframe(num_event, num_start)
 
     PTCUT = 0.5
 
@@ -100,7 +104,7 @@ def prepare_dataset(num_event, num_start=0):
         # node features
         node_features = df_pfcands.drop(
             df_pfcands.loc[:, ['PF_charge']], axis=1).to_numpy()
-       
+
         node_features = torch.from_numpy(node_features)
         node_features = node_features.type(torch.float32)
 
@@ -127,7 +131,7 @@ def prepare_dataset(num_event, num_start=0):
         #print ("puppiWeight_one_hot", puppiWeight_one_hot)
         #if num ==0:
            #print("node_features[:,-1:]",node_features[:,-1:])
-           #print("node_features:", node_features[:,5:6])       
+           #print("node_features:", node_features[:,5:6])
         node_features = torch.cat(
             # (node_features[:, 0:3], pdgId_one_hot, puppiWeight_one_hot), 1)
             (node_features[:, 0:3], pdgId_one_hot,node_features[:,-1:], puppiWeight_one_hot), 1)
@@ -172,11 +176,16 @@ def prepare_dataset(num_event, num_start=0):
         #print ("PF_dz", dz)
        # print ("PF_charge", charge)
        # print ("PF_vertexChi2",vertexChi2)
-        
-        df_gencands =df_gen_list[num] 
+
+        df_gencands =df_gen_list[num]
         gen_features = df_gencands.to_numpy()
         gen_features = torch.from_numpy(gen_features)
         gen_features = gen_features.type(torch.float32)
+
+        df_pf_raw = df_pf_raw_list[num]
+        pf_rawfeatures = df_pf_raw.to_numpy()
+        pf_rawfeatures = torch.from_numpy(pf_rawfeatures)
+        pf_rawfeatures= pf_rawfeatures.type(torch.float32)
             #gen_features = torch.cat((gen_features[:,0:4]),1)
 
         dist_phi = distance.cdist(phi, phi, 'cityblock')
@@ -199,6 +208,7 @@ def prepare_dataset(num_event, num_start=0):
         graph.Charge_index = Charge_index
         graph.num_classes = 2
         graph.GenPart_nump = gen_features
+        graph.PFPartraw_nump = pf_rawfeatures
         graph.GenParts = df_gen_list[num]
         data_list.append(graph)
 
@@ -211,7 +221,7 @@ def main():
     dataset_train = prepare_dataset(num_events_train)
     with open("dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
         pickle.dump(dataset_train, fp)
-   
+
     num_events_test=80
     dataset_test = prepare_dataset(num_events_test)
     with open("dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
@@ -222,7 +232,7 @@ def main():
     with open("dataset_graph_puppi_" + str(num_events_valid), "wb") as fp:
         pickle.dump(dataset_valid, fp)
 
-    num_events_valid = 1000
+    num_events_valid = 1500
     dataset_valid = prepare_dataset(num_events_valid, num_events_train)
     with open("dataset_graph_puppi_" + str(num_events_valid), "wb") as fp:
         pickle.dump(dataset_valid, fp)
