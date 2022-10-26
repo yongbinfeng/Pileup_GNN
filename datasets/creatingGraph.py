@@ -18,7 +18,8 @@ np.random.seed(0)
 def gen_dataframe(num_event, num_start=0):
     print(f"reading events from {num_start} to {num_start+num_event}")
     tree = uproot.open(
-        "/depot/cms/private/users/gpaspala/output_1.root")["Events"]
+#        "/depot/cms/private/users/gpaspala/output_1.root")["Events"]
+         "/depot/cms/private/users/gpaspala/ZJetsToNuNu_HT-200To400/output_1.root")["Events"]
     pfcands = tree.arrays(
         tree.keys('PF_*'), entry_start=num_start, entry_stop=num_event + num_start)
 
@@ -42,8 +43,10 @@ def gen_dataframe(num_event, num_start=0):
         #
         # todo: add more features here
         #
+        #selected_features = ['PF_eta', 'PF_phi', 'PF_pt',
+         #                    'PF_pdgId', 'PF_charge', 'PF_puppiWeight','PF_dz']
         selected_features = ['PF_eta', 'PF_phi', 'PF_pt',
-                             'PF_pdgId', 'PF_charge', 'PF_puppiWeight','PF_dz']
+                             'PF_pdgId', 'PF_charge', 'PF_puppiWeight','PF_puppiWeightChg','PF_dz']
         event_nPF = ak.to_numpy(event['PF_eta']).size
         pf_chosen = event[selected_features]
 
@@ -135,16 +138,17 @@ def prepare_dataset(num_event, num_start=0):
         node_features = torch.cat(
             # (node_features[:, 0:3], pdgId_one_hot, puppiWeight_one_hot), 1)
             (node_features[:, 0:3], pdgId_one_hot,node_features[:,-1:], puppiWeight_one_hot), 1)
+            #i(node_features[:, 0:3], pdgId_one_hot,node_features[:,5:6], puppiWeight_one_hot), 1)
             # (node_features[:, 0:4], pdgId_one_hot, puppiWeight_one_hot), 1)
 
         if num == 0:
             print("pdgId dimensions: ", pdgId_one_hot.shape)
             print("puppi weights dimensions: ", puppiWeight_one_hot.shape)
-            print("dz dimention: ", node_features[:,-1:].shape)
+            print("last dimention: ", node_features[:,-1:].shape)
             print("node_features dimension: ", node_features.shape)
             print("node_features[:, 0:3] dimention: ", node_features[:, 0:3].shape)
             print("node_features dimension: ", node_features.shape)
-            #print("node_features[:, 6:7]", node_features[:, 6:7]) #dz values
+            print("node_features[:, 6:7]", node_features[:, 6:7].shape) #dz values
             #print("columnsNamesArr", columnsNamesArr)
             #print ("pdgId_one_hot " , pdgId_one_hot)
             #print("node_features[:,-1:]",node_features[:,-1:])
@@ -217,24 +221,24 @@ def prepare_dataset(num_event, num_start=0):
 
 def main():
     start = timer()
-    num_events_train = 100
+    num_events_train = 2000
     dataset_train = prepare_dataset(num_events_train)
     with open("dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
         pickle.dump(dataset_train, fp)
 
-    num_events_test=80
+    num_events_test=2000
     dataset_test = prepare_dataset(num_events_test)
     with open("dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
         pickle.dump(dataset_train, fp)
 
-    num_events_valid = 50
+    num_events_valid = 2000
     dataset_valid = prepare_dataset(num_events_valid, num_events_train)
-    with open("dataset_graph_puppi_" + str(num_events_valid), "wb") as fp:
+    with open("dataset_graph_puppi_val_" + str(num_events_valid), "wb") as fp:
         pickle.dump(dataset_valid, fp)
 
     num_events_valid = 1500
     dataset_valid = prepare_dataset(num_events_valid, num_events_train)
-    with open("dataset_graph_puppi_" + str(num_events_valid), "wb") as fp:
+    with open("dataset_graph_puppi_PF_puppiWeightChg_" + str(num_events_valid), "wb") as fp:
         pickle.dump(dataset_valid, fp)
 
     end = timer()
