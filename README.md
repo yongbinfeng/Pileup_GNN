@@ -2,24 +2,23 @@
 This repository is the implementation in PyTorch for the paper "Semi-supervised Graph Neural Networks for Pileup Per Particle Identification".
 
 ## Datasets ##
-- Fast simulation datasets are the dataset from Pileup mitigation at the Large Hadron Collider
-with Graph Neural Networks [paper](https://arxiv.org/pdf/1810.07988.pdf). The datasets for different pileup conditions can be obtrained from [here](https://zenodo.org/search?page=1&size=20&q=PuppiML).
+Full sim datasets based on NanoAOD.
 - Real simulation dataset is a more realistic setting of pileup simulation, which can be obtained from [here]().
-- `/fast_simulation` directory contains the training and testing files on fast simulation dataset.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
 
-## Dependencies ##
-- Python ==3.8
-- Torch  ==1.7.1
-- numpy ==1.20.1
-- torch_geometric == 1.6.3
-
 ## Setting up requirements ##
-For convience, requirements.txt can be used, run as the following
-```bash
-pip3 install -r requirements.txt
+One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v1`.
+
+To run the environment, do for example:
 ```
-However, this doesn't include torch_geometric related packeages. Tutorials about how to install torch_geometric could be found [here](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (Note: please check CUDA version before installation)
+sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v1
+cd /Workdir
+```
+
+Then can open the jupyter notebook with
+```
+jupyter notebook --allow-root --no-browser --port 8888 --ip 0.0.0.0
+```
 
 ## Note ##
 - Don't forget to change the directory of your downloaded raw datasets in prepare dataset files. \
