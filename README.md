@@ -1,5 +1,7 @@
 # Pileup_GNN
-This repository is the implementation in PyTorch for the paper "Semi-supervised Graph Neural Networks for Pileup Per Particle Identification".
+This repository collects the code for the study of apply semi-supervised GNN for pileup mitigation, on the full Geant-based simulation samples.
+
+The original code is based on [this repository](https://github.com/sallylsk/Pileup_GNN), with the paper [here](https://arxiv.org/abs/2203.15823).
 
 ## Datasets ##
 Full sim datasets based on NanoAOD.
@@ -7,7 +9,7 @@ Full sim datasets based on NanoAOD.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
 
 ## Setting up requirements ##
-One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v1`.
+One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v2`.
 
 To run the environment, do for example:
 ```
@@ -86,42 +88,3 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  
 ## Saved models ##
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
-
-## Gilbreth Cluster Helpful tips ##
-
-### Install packages ###
-For installing packages, [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/examples/apps/python/packages) includes all kinds of detials. In general, here are some steps:
-
- ```bash
-module load anaconda/5.1.0-py36
-conda-env-mod create -p /depot/mylab/apps/mypackages
-module load use.own
-module load conda-env/mypackages-py3.6.4
-```
-
-#### Install with pip ####
-```bash
-pip install mpi4py
-```
-
-#### Install with Conda ####
-```bash
-conda install opencv
-```
-
-### how to create job scripts ###
-To submit job to the cluster, first create job scripts using instruction in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/script)
-
-### how to submit jobs ###
-Once job script is created, use instructions in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/submit) to submit jobs to the cluster.
-
-### how to monitor job status and outputs ###
-After job submission, use instructions in [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/status) to monitor job status and [here](https://www.rcac.purdue.edu/knowledge/gilbreth/run/slurm/output) to check job output.
-
-
-
-
-
-
-
-
