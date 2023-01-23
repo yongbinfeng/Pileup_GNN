@@ -20,7 +20,7 @@ def gen_dataframe(num_event, num_start=0):
     select pfcands from original root and convert to a dataframe
     """
     print(f"reading events from {num_start} to {num_start+num_event}")
-    filename = "/Workdir/data/output_7.root"
+    filename = "/Workdir/data/output_2.root"
     tree = uproot.open(filename)["Events"]
     pfcands = tree.arrays(filter_name="PF_*", entry_start=num_start,
                           entry_stop=num_event + num_start)
@@ -120,8 +120,10 @@ def prepare_dataset(num_event, num_start=0):
         assert pdgId_one_hot.shape[1] == 3, "pdgId_one_hot.shape[1] != 3"
         # print ("pdgID_one_hot", pdgId_one_hot)
         # set the neutral puppiWeight to default
-        node_features[[Neutral_index.tolist()], 4] = 2
-        puppiWeight = node_features[:, 4]
+        index_puppi = 4
+        pWeight = node_features[:, index_puppi].clone()
+        node_features[[Neutral_index.tolist()], index_puppi] = 2
+        puppiWeight = node_features[:, index_puppi]
         puppiWeight = puppiWeight.type(torch.long)
         puppiWeight_one_hot = torch.nn.functional.one_hot(puppiWeight)
         puppiWeight_one_hot = puppiWeight_one_hot.type(torch.float32)
@@ -172,7 +174,7 @@ def prepare_dataset(num_event, num_start=0):
 
         edge_index = np.array([edge_source, edge_target])
         edge_index = torch.from_numpy(edge_index)
-        edge_index = edge_index.type(torch.float32)
+        edge_index = edge_index.type(torch.long)
 
         graph = Data(x=node_features, edge_index=edge_index, y=label)
         graph.LV_index = LV_index
@@ -181,6 +183,7 @@ def prepare_dataset(num_event, num_start=0):
         graph.Charge_index = Charge_index
         graph.num_classes = 2
         graph.GenPart_nump = gen_features
+        graph.pWeight = pWeight
         data_list.append(graph)
 
     return data_list
@@ -188,15 +191,15 @@ def prepare_dataset(num_event, num_start=0):
 
 def main():
     start = timer()
-    num_events_train = 100
+    num_events_train = 8000
     dataset_train = prepare_dataset(num_events_train)
-    with open("dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
+    with open("../data_pickle/dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
         pickle.dump(dataset_train, fp)
 
-    num_events_test = 100
-    dataset_test = prepare_dataset(num_events_test, num_events_train)
-    with open("dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
-        pickle.dump(dataset_train, fp)
+    # num_events_test = 3000
+    # dataset_test = prepare_dataset(num_events_test, num_events_train)
+    # with open("../data_pickle/dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
+    #    pickle.dump(dataset_train, fp)
 
     # num_events_valid = 2000
     # dataset_valid = prepare_dataset(num_events_valid, num_events_train)

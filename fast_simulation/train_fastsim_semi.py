@@ -1,3 +1,9 @@
+import math
+from tqdm import tqdm
+from timeit import default_timer as timer
+import pickle
+import random
+import numpy as np
 import argparse
 import torch
 from torch_geometric.data import DataLoader
@@ -8,12 +14,6 @@ from copy import deepcopy
 import os
 
 matplotlib.use("pdf")
-import numpy as np
-import random
-import pickle
-from timeit import default_timer as timer
-from tqdm import tqdm
-import math
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
@@ -37,22 +37,25 @@ def arg_parse():
                         help='Number of training epochs')
     parser.add_argument('--pulevel', type=int,
                         help='pileup level for the dataset')
-    parser.add_argument('--training_path', type=str, required=True,
+    parser.add_argument('--training_path', type=str,
                         help='path for training graphs')
-    parser.add_argument('--validation_path', type=str, required=True,
+    parser.add_argument('--validation_path', type=str,
                         help='path for validation graphs')
-    parser.add_argument('--save_dir', type=str, required=True,
+    parser.add_argument('--save_dir', type=str,
                         help='directory to save trained model and plots')
 
     parser.set_defaults(model_type='Gated',
                         num_layers=2,
-                        batch_size=1,
+                        batch_size=4,
                         hidden_dim=20,
                         dropout=0,
                         opt='adam',
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
+                        training_path="../data_pickle/dataset_graph_puppi_3000",
+                        validation_path="../data_pickle/dataset_graph_puppi_test_3000",
+                        save_dir="test",
                         )
 
     return parser.parse_args()
@@ -60,9 +63,9 @@ def arg_parse():
 
 def train(dataset, dataset_validation, args, batchsize):
     directory = args.save_dir
-    #parent_dir = "/home/feng356/depot/Pileup_GNN/datasets/"
-    parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/fast_simulation/"
-    path = os.path.join(parent_dir, directory)
+    # parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/fast_simulation/"
+    # path = os.path.join(parent_dir, directory)
+    path = directory
     isdir = os.path.isdir(path)
 
     if isdir == False:
@@ -71,14 +74,14 @@ def train(dataset, dataset_validation, args, batchsize):
     start = timer()
 
     rotate_mask = 5
-    #rotate_mask = 2
+    # rotate_mask = 2
     if args.pulevel == 20:
         rotate_mask = 8
         num_select_LV = 3
         num_select_PU = 45
     elif args.pulevel == 80:
         num_select_LV = 5
-        num_select_PU = 50
+        num_select_PU = 5
     else:
         num_select_LV = 6
         num_select_PU = 282
@@ -89,7 +92,8 @@ def train(dataset, dataset_validation, args, batchsize):
     training_loader = DataLoader(dataset, batch_size=batchsize)
     validation_loader = DataLoader(dataset_validation, batch_size=batchsize)
 
-    model = models.GNNStack(dataset[0].num_feature_actual, args.hidden_dim, 1, args)
+    model = models.GNNStack(
+        dataset[0].num_feature_actual, args.hidden_dim, 1, args)
     model.to(device)
     scheduler, opt = utils.build_optimizer(args, model.parameters())
 
@@ -135,7 +139,8 @@ def train(dataset, dataset_validation, args, batchsize):
         model.train()
         train_mask_all = None
 
-        t = tqdm(total=len(training_loader), colour='green', bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')
+        t = tqdm(total=len(training_loader), colour='green',
+                 bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')
         loss_avg = utils.RunningAverage()
         for batch in training_loader:
             count_event += 1
@@ -144,9 +149,10 @@ def train(dataset, dataset_validation, args, batchsize):
             feature_with_mask = batch.x
             for iter in range(rotate_mask):
                 num_feature = batch.num_feature_actual[0].item()
-                #print("num_feature ", num_feature)
+                # print("num_feature ", num_feature)
                 batch.x = torch.cat((feature_with_mask[:, 0:num_feature],
-                                     feature_with_mask[:, (num_feature + iter)].view(-1, 1),
+                                     feature_with_mask[:,
+                                                       (num_feature + iter)].view(-1, 1),
                                      feature_with_mask[:, -num_feature:]), 1)
                 batch = batch.to(device)
 
@@ -154,7 +160,7 @@ def train(dataset, dataset_validation, args, batchsize):
 
                 label = batch.y
                 train_mask = batch.x[:, num_feature]
-                #print("train mask: ", torch.sum(train_mask))
+                # print("train mask: ", torch.sum(train_mask))
                 if train_mask_all != None:
                     train_mask_all = torch.cat((train_mask_all, train_mask), 0)
                 else:
@@ -165,38 +171,38 @@ def train(dataset, dataset_validation, args, batchsize):
                 label = label.view(-1, 1)
                 pred = pred[train_mask == 1]
 
-                #print("pred: ", pred)
-                #print("label: ", label)
+                # print("pred: ", pred)
+                # print("label: ", label)
                 loss = model.loss(pred, label)
                 cur_loss += loss.item()
                 opt.zero_grad()
                 loss.backward()
                 opt.step()
-            
+
             if math.isnan(cur_loss):
                 print("cur_loss ", cur_loss)
                 print("label: ", label)
                 print("pred: ", pred)
             cur_loss = cur_loss / rotate_mask
             loss_graph.append(cur_loss)
-            #print("cur_loss ", cur_loss)
+            # print("cur_loss ", cur_loss)
             loss_avg.update(cur_loss)
-            #print("loss_avg ", loss_avg())
+            # print("loss_avg ", loss_avg())
             t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
             t.update()
 
-            if count_event % 100 == 0:
+            if count_event % 1000 == 0:
                 training_loss, training_loss_hybrid, train_acc, train_auc, train_auc_hybrid, \
-                train_puppi_acc, train_puppi_auc, \
-                train_acc_neu, train_auc_neu, train_auc_neu_hybrid, \
-                train_puppi_acc_neu, train_puppi_auc_neu, train_fig_name = test(
-                    training_loader, model, 0, count_event, args)
+                    train_puppi_acc, train_puppi_auc, \
+                    train_acc_neu, train_auc_neu, train_auc_neu_hybrid, \
+                    train_puppi_acc_neu, train_puppi_auc_neu, train_fig_name = test(
+                        training_loader, model, 0, count_event, args)
 
                 valid_loss, valid_loss_hybrid, valid_acc, valid_auc, valid_auc_hybrid, \
-                valid_puppi_acc, valid_puppi_auc, \
-                valid_acc_neu, valid_auc_neu, valid_auc_neu_hybrid, \
-                valid_puppi_acc_neu, valid_puppi_auc_neu, valid_fig_name = test(
-                    validation_loader, model, 1, count_event, args)
+                    valid_puppi_acc, valid_puppi_auc, \
+                    valid_acc_neu, valid_auc_neu, valid_auc_neu_hybrid, \
+                    valid_puppi_acc_neu, valid_puppi_auc_neu, valid_fig_name = test(
+                        validation_loader, model, 1, count_event, args)
 
                 epochs_valid.append(count_event)
                 loss_graph_valid.append(valid_loss)
@@ -223,15 +229,16 @@ def train(dataset, dataset_validation, args, batchsize):
                 train_fig_names.append(train_fig_name)
                 valid_fig_names.append(valid_fig_name)
 
-                if valid_auc_neu > best_validation_auc:
-                    best_validation_auc = valid_auc_neu
-                    print("model is saved in " +  path + "/best_valid_model.pt")
-                    torch.save(model.state_dict(), path + "/best_valid_model.pt")
+                if valid_auc > best_validation_auc:
+                    best_validation_auc = valid_auc
+                    print("model is saved in " + path + "/best_valid_model.pt")
+                    torch.save(model.state_dict(), path +
+                               "/best_valid_model.pt")
 
                 if valid_loss >= lowest_valid_loss:
                     print(
                         "valid loss increase at event " + str(count_event) + " with validation loss " + str(valid_loss))
-                    if last_steady_event == count_event - 100:
+                    if last_steady_event == count_event - 1000:
                         converge_num_event += 1
                         if converge_num_event > 30:
                             converge = True
@@ -241,7 +248,7 @@ def train(dataset, dataset_validation, args, batchsize):
                     else:
                         converge_num_event = 1
                         last_steady_event = count_event
-                    #print("converge num event " + str(converge_num_event))
+                    # print("converge num event " + str(converge_num_event))
                 else:
                     print("lowest valid loss " + str(valid_loss))
                     lowest_valid_loss = valid_loss
@@ -262,15 +269,16 @@ def train(dataset, dataset_validation, args, batchsize):
                         loss_graph_valid, auc_graph_valid, valid_accuracy_neu, auc_graph_valid_puppi,
                         valid_accuracy_puppi_neu,
                         auc_graph_neu_train, auc_graph_train_puppi_neu,
-                        auc_graph_neu_valid, auc_graph_valid_puppi_neu, dir_name = args.save_dir
+                        auc_graph_neu_valid, auc_graph_valid_puppi_neu, dir_name=args.save_dir
                         )
 
-    #utils.plot_training(epochs_train, epochs_valid, loss_graph_train,
-     #                   loss_graph, auc_graph_train, train_accuracy_neu, 
-     #                   loss_graph_valid, auc_graph_valid, valid_accuracy_neu,
-     #                   auc_graph_neu_train, 
-     #                   auc_graph_neu_valid, dir_name = args.save_dir
-     #                   )
+    # utils.plot_training(epochs_train, epochs_valid, loss_graph_train,
+    #                   loss_graph, auc_graph_train, train_accuracy_neu,
+    #                   loss_graph_valid, auc_graph_valid, valid_accuracy_neu,
+    #                   auc_graph_neu_train,
+    #                   auc_graph_neu_valid, dir_name = args.save_dir
+    #                   )
+
 
 def test(loader, model, indicator, epoch, args):
     if indicator == 0:
@@ -299,11 +307,13 @@ def test(loader, model, indicator, epoch, args):
             num_feature = data.num_feature_actual[0].item()
             test_mask = data.x[:, num_feature]
 
-            data.x = torch.cat((data.x[:, 0:num_feature], test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
+            data.x = torch.cat(
+                (data.x[:, 0:num_feature], test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
             data = data.to(device)
             # max(dim=1) returns values, indices tuple; only need indices
             pred, pred_hybrid = model.forward(data)
-            puppi = data.x[:, data.num_feature_actual[0].item() - 1]
+            #puppi = data.x[:, data.num_feature_actual[0].item() - 1]
+            puppi = data.pWeight
             label = data.y
 
             if pred_all != None:
@@ -332,7 +342,8 @@ def test(loader, model, indicator, epoch, args):
             label = label.type(torch.float)
             label = label.view(-1, 1)
             total_loss += model.loss(pred, label).item() * data.num_graphs
-            total_loss_hybrid += model.loss(pred_hybrid, label).item() * data.num_graphs
+            total_loss_hybrid += model.loss(pred_hybrid,
+                                            label).item() * data.num_graphs
 
     if indicator == 0:
         total_loss /= min(epoch, len(loader.dataset))
@@ -370,28 +381,28 @@ def test(loader, model, indicator, epoch, args):
     acc_neu = utils.get_acc(label_all_neu, pred_all_neu)
     acc_neu_puppi = utils.get_acc(label_all_neu, puppi_all_neu)
 
-
     utils.plot_roc([label_all_chg, label_all_neu],
-                   [pred_all_chg,  pred_all_neu ],
+                   [pred_all_chg,  pred_all_neu],
                    legends=["prediction Chg", "prediction Neu"],
                    postfix=postfix + "_test", dir_name=args.save_dir)
-
 
     fig_name_prediction = utils.plot_discriminator(epoch,
                                                    [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0],
                                                     pred_all_neu[label_all_neu == 1],
                                                     pred_all_neu[label_all_neu == 0]],
-                                                   legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
+                                                   legends=[
+                                                       'LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
                                                    postfix=postfix + "_prediction", label='Prediction', dir_name=args.save_dir)
     fig_name_puppi = utils.plot_discriminator(epoch,
                                               [puppi_all_chg[label_all_chg == 1], puppi_all_chg[label_all_chg == 0],
                                                puppi_all_neu[label_all_neu == 1],
                                                puppi_all_neu[label_all_neu == 0]],
-                                              legends=['LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
+                                              legends=[
+                                                  'LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
                                               postfix=postfix + "_puppi", label='PUPPI Weight', dir_name=args.save_dir)
 
     return total_loss, total_loss_hybrid, acc_chg, auc_chg, auc_chg_hybrid, acc_chg_puppi, auc_chg_puppi, \
-           acc_neu, auc_neu, auc_neu_hybrid, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
+        acc_neu, auc_neu, auc_neu_hybrid, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
 
 
 def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
@@ -403,7 +414,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
         np.random.shuffle(PU_index)
         original_feature = graph.x[:, 0:graph.num_feature_actual]
 
-        #pf_dz_training = torch.zeros(graph.num_nodes, num_mask)
+        # pf_dz_training = torch.zeros(graph.num_nodes, num_mask)
         mask_training = torch.zeros(graph.num_nodes, num_mask)
         for num in range(num_mask):
             if LV_index.shape[0] < num_select_LV or PU_index.shape[0] < num_select_PU:
@@ -412,13 +423,16 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
 
             # generate the index for LV and PU samples for training mask
             # gen_index_LV = random.sample(range(LV_index.shape[0]), num_select_LV)
-            selected_LV_train = np.take(LV_index, range(num * num_select_LV, (num + 1) * num_select_LV), mode='wrap')
+            selected_LV_train = np.take(LV_index, range(
+                num * num_select_LV, (num + 1) * num_select_LV), mode='wrap')
 
             # gen_index_PU = random.sample(range(PU_index.shape[0]), num_select_PU)
-            selected_PU_train = np.take(PU_index, range(num * num_select_PU, (num + 1) * num_select_PU), mode='wrap')
+            selected_PU_train = np.take(PU_index, range(
+                num * num_select_PU, (num + 1) * num_select_PU), mode='wrap')
 
-            training_mask = np.concatenate((selected_LV_train, selected_PU_train), axis=None)
-            #print(training_mask)
+            training_mask = np.concatenate(
+                (selected_LV_train, selected_PU_train), axis=None)
+            # print(training_mask)
 
             # construct mask vector for training and testing
             mask_training_cur = torch.zeros(graph.num_nodes)
@@ -430,38 +444,40 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
 
         # mask the puppiWeight as default Neutral(here puppiweight is actually fromLV in ggnn dataset)
         puppiWeight_default_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
-                                                          torch.zeros(graph.num_nodes, 1),
+                                                          torch.zeros(
+                                                              graph.num_nodes, 1),
                                                           torch.ones(graph.num_nodes, 1)), 1)
-        puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(torch.float32)
-        
-        #mask the pdgID for charge particles
+        puppiWeight_default_one_hot_training = puppiWeight_default_one_hot_training.type(
+            torch.float32)
+
+        # mask the pdgID for charge particles
         pdgId_one_hot_training = torch.cat((torch.zeros(graph.num_nodes, 1),
-                                                          torch.zeros(graph.num_nodes, 1),
-                                                          torch.ones(graph.num_nodes, 1)), 1)       
+                                            torch.zeros(graph.num_nodes, 1),
+                                            torch.ones(graph.num_nodes, 1)), 1)
         pdgId_one_hot_training = pdgId_one_hot_training.type(torch.float32)
 
-        pf_dz_training_test=torch.clone(original_feature[:,6:7])
-        #print ("pf_dz_training_test: ", pf_dz_training_test)
-        #print ("pf_dz_training_test: ", pf_dz_training_test.shape)
-        #pf_dz_training_test[[training_mask.tolist()],0]=0
-        pf_dz_training_test = torch.zeros(graph.num_nodes, 1)        
-        
-        #print ("pf_dz_training_test: ", pf_dz_training_test)
-        #print ("puppiWeight_default_one_hot_training size: ", puppiWeight_default_one_hot_training.size())
-        #print ("pf_dz_training_test size: ", pf_dz_training_test.size())
-        
-        #print ("pf_dz_training_test: ", pf_dz_training_test)
+        #pf_dz_training_test = torch.clone(original_feature[:, 6:7])
+        # print ("pf_dz_training_test: ", pf_dz_training_test)
+        # print ("pf_dz_training_test: ", pf_dz_training_test.shape)
+        # pf_dz_training_test[[training_mask.tolist()],0]=0
+        #pf_dz_training_test = torch.zeros(graph.num_nodes, 1)
+
+        # print ("pf_dz_training_test: ", pf_dz_training_test)
+        # print ("puppiWeight_default_one_hot_training size: ", puppiWeight_default_one_hot_training.size())
+        # print ("pf_dz_training_test size: ", pf_dz_training_test.size())
+
+        # print ("pf_dz_training_test: ", pf_dz_training_test)
 
         # replace the one-hot encoded puppi weights and PF_dz
-        #default_data_training = torch.cat(
-         #   (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
-        
-        #default_data_training = torch.cat(
-         #    (original_feature[:, 0:(graph.num_feature_actual - 4)],pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
-        ## add masked PdgID
+        # default_data_training = torch.cat(
+        #   (original_feature[:, 0:(graph.num_feature_actual - 3)], puppiWeight_default_one_hot_training), 1)
+
+        # default_data_training = torch.cat(
+        #    (original_feature[:, 0:(graph.num_feature_actual - 4)],pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
+        # add masked PdgID
         default_data_training = torch.cat(
-             (original_feature[:, 0:(graph.num_feature_actual - 7)],pdgId_one_hot_training, pf_dz_training_test ,puppiWeight_default_one_hot_training), 1)
-        
+            (original_feature[:, 0:(graph.num_feature_actual - 6)], pdgId_one_hot_training, puppiWeight_default_one_hot_training), 1)
+
         concat_default = torch.cat((graph.x, default_data_training), 1)
         graph.x = concat_default
         graph.num_mask = num_mask
@@ -474,7 +490,8 @@ def generate_neu_mask(dataset):
         graph.num_feature_actual = graph.num_features
         Neutral_index = graph.Neutral_index
         Neutral_feature = graph.x[Neutral_index]
-        Neutral_index = Neutral_index[torch.where(Neutral_feature[:, 2] > 0.5)[0]]
+        Neutral_index = Neutral_index[torch.where(
+            Neutral_feature[:, 2] > 0.5)[0]]
 
         mask_neu = torch.zeros(nparticles, 1)
         mask_neu[Neutral_index, 0] = 1
