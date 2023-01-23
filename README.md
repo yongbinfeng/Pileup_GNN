@@ -11,7 +11,7 @@ One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0
 
 To run the environment, do for example:
 ```
-sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v1
+sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v2
 cd /Workdir
 ```
 
