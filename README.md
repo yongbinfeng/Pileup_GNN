@@ -9,12 +9,18 @@ Full sim datasets based on NanoAOD.
 - `/real_simulation` directory contains the training and testing files on real simulation dataset.
 
 ## Setting up requirements ##
-One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v2`.
+One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v3`.
 
 To run the environment, do for example:
 ```
 sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v2
 cd /Workdir
+```
+
+For sites supporting singularity, you can also run the environment with singularity:
+```
+singularity pull gnntrainingenv.sif docker://yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v3
+singularity run --nv -B /PATH_TO_Pileup_GNN:/Workdir gnntrainingenv.sif
 ```
 
 Then can open the jupyter notebook with

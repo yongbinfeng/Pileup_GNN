@@ -81,7 +81,7 @@ def train(dataset, dataset_validation, args, batchsize):
         num_select_PU = 45
     elif args.pulevel == 80:
         num_select_LV = 5
-        num_select_PU = 5
+        num_select_PU = 40
     else:
         num_select_LV = 6
         num_select_PU = 282
