@@ -191,6 +191,7 @@ def prepare_dataset(num_event, num_start=0):
 
 def main():
     start = timer()
+
     num_events_train = 8000
     dataset_train = prepare_dataset(num_events_train)
     with open("../data_pickle/dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
@@ -204,11 +205,6 @@ def main():
     # num_events_valid = 2000
     # dataset_valid = prepare_dataset(num_events_valid, num_events_train)
     # with open("dataset_graph_puppi_val_" + str(num_events_valid), "wb") as fp:
-    #    pickle.dump(dataset_valid, fp)
-
-    # num_events_valid = 1500
-    # dataset_valid = prepare_dataset(num_events_valid, num_events_train)
-    # with open("dataset_graph_puppi_PF_puppiWeightChg_" + str(num_events_valid), "wb") as fp:
     #    pickle.dump(dataset_valid, fp)
 
     end = timer()
