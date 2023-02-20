@@ -15,7 +15,7 @@ git clone git@github.com:yongbinfeng/Pileup_GNN.git
 ```
 With docker, do for example:
 ```
-sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v2
+sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v3
 cd /Workdir
 ```
 (Port number 8888 is only needed for the Jupyter notebook.)
