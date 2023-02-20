@@ -1,32 +1,39 @@
-# Pileup_GNN
+# Graph PUPPI
 This repository collects the code for the study of apply semi-supervised GNN for pileup mitigation, on the full Geant-based simulation samples.
 
-The original code is based on [this repository](https://github.com/sallylsk/Pileup_GNN), with the paper [here](https://arxiv.org/abs/2203.15823).
+The original code is based on [this repository](https://github.com/sallylsk/Pileup_GNN), with the paper [here](https://arxiv.org/abs/2203.15823). The studies in the paper and code are done on Delphes dataset.
 
 ## Datasets ##
-Full sim datasets based on NanoAOD.
-- Real simulation dataset is a more realistic setting of pileup simulation, which can be obtained from [here]().
-- `/real_simulation` directory contains the training and testing files on real simulation dataset.
+Full sim datasets based on customized CMS NanoAODs with some additional variables to help compare with PUPPI performances and understand the differences. We start with $Z\to\nu\nu$ HT datasets.
 
 ## Setting up requirements ##
-One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v3`.
+One docker environment has been prepared: `yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v3`, which should include all the modules and packages to run the full pipeline.
 
-To run the environment, do for example:
+To run the environment, firstly clone the code
+```
+git clone git@github.com:yongbinfeng/Pileup_GNN.git
+```
+With docker, do for example:
 ```
 sudo docker run -it --gpus=1 -v/PATH_TO_Pileup_GNN:/Workdir -p 8888:8888 -t yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v2
 cd /Workdir
 ```
+(Port number 8888 is only needed for the Jupyter notebook.)
 
 For sites supporting singularity, you can also run the environment with singularity:
 ```
 singularity pull gnntrainingenv.sif docker://yongbinfeng/gnntrainingenv:cuda11.3.0-runtime-torch1.12.1-tg2.2.0-ubuntu20.04_v3
 singularity run --nv -B /PATH_TO_Pileup_GNN:/Workdir gnntrainingenv.sif
 ```
+Image only needs to be pulled once (`singularity pull`).
 
 Then can open the jupyter notebook with
 ```
 jupyter notebook --allow-root --no-browser --port 8888 --ip 0.0.0.0
 ```
+
+### SetUp
+The code contains three major ingredients: graph generation, training, and performance testing.
 
 ## Note ##
 - Don't forget to change the directory of your downloaded raw datasets in prepare dataset files. \
