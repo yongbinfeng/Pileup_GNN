@@ -64,4 +64,4 @@ You can specify arguments for training, or it will follow the default sets in th
 - Supervised training: to be updated
 
 ### Testing ###
-Use the `test_physics_metrics.py` for now.
+Use the `testing/test_physics_metrics.py` for now.

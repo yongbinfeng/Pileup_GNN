@@ -53,8 +53,8 @@ def arg_parse():
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
-                        training_path="../data_pickle/dataset_graph_puppi_3000",
-                        validation_path="../data_pickle/dataset_graph_puppi_test_3000",
+                        training_path="data_pickle/dataset_graph_puppi_3000",
+                        validation_path="data_pickle/dataset_graph_puppi_test_3000",
                         save_dir="test",
                         )
 
