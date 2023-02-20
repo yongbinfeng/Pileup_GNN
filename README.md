@@ -36,7 +36,7 @@ jupyter notebook --allow-root --no-browser --port 8888 --ip 0.0.0.0
 The code contains three major ingredients: graph generation, training, and performance testing.
 
 ### Build graphs ##
-- In `/datasets`, `creatingGraph.py` is the script to construct graphs for dataset.
+- In `/graphconstruction`, `creatingGraph.py` is the script to construct graphs for dataset.
 - Download the datasets and change the `iname` variable to the location.
 - graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.4.
 - The number of events you want to construct graphs for can be passed as an argument `num_events`
@@ -47,30 +47,21 @@ The code contains three major ingredients: graph generation, training, and perfo
 - [ ] The conversion from awkward arrays to pandas dataframes can probably be avoided. The graph construction can be done directly on the awkward arrays. There might also be better ways to speed up the graph construction.
 
 ## Training ##
-Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the training and validation graphs as instructed in **Construct graphs** section.\
-\
+Graphs need to be constructed before running the training code.
+
 You can specify arguments for training, or it will follow the default sets in the files. The particular arguments that need to be set are `pulevel` to specify the nPU of the training dataset, the `training_path` and `validation_path` to specify the path for the training and validation graphs being constructed in previous step, plus the `save_dir` to specify the directory you want to save the trained model and some training plots.\
 \
 *Fast simulation dataset:* Training can be on both supervised setting and semi-supervised setting. Semi-supervised setting trains on selected charged particles as shown in our paper. Supervised training is trained on all neutral particles which only. 
-- Semi-supervised training: in `/fast_simulation` directory, run
+- Semi-supervised training: run
 ```bash
- python train_fastsim_semi.py --training_path 'your training graph directory' --validation_path 'your validation graph directory' --save_dir 'the dirctory you wish save all the results to'
+ python training/train_semi.py --training_path 'your training graph directory' --validation_path 'your validation graph directory' --save_dir 'the dirctory you wish save all the results to'
  ``` 
  Note that, the full path would be the 'parent direcotory' mentioned above concatenate with the --save_dir. 
  For example, if you want to train on PU80 with 2 layers of gated model with 20 dimension. Run 
  ```bash
- python train_fastsim_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 80 --validation_path ... --training_path ... --save_dir ...
+ python training/train_semi.py --model_type 'Gated' --num_layers 2 --hidden_dim 20 --pulevel 80 --validation_path ... --training_path ... --save_dir ...
  ``` 
-- Supervised training: in `/real_simulation` directory, run 
-```bash
- python train_fastsim_sup.py --validation_path ... --training_path ... --save_dir ...
- ``` 
-
-*Real simulation dataset:* Training can only be in semi-supervised setting since there are no labels for neutral particles \
-In `/real_simulation` directory, run
-```bash
- python train_realsim.py
- ``` 
+- Supervised training: to be updated
 
 ## Testing ##
 After training phase, the trained models will be saved and ready for testing. Testing will directly load the models saved during training.\

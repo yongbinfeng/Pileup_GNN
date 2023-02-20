@@ -1,3 +1,12 @@
+"""
+code to run fully supervised trainings.
+Inherited from fast simulation setup. Need to modify in order to get it running on full sim.
+Not working yet.
+"""
+
+from tqdm import tqdm
+from timeit import default_timer as timer
+import pickle
 import argparse
 import torch
 from torch_geometric.data import DataLoader
@@ -8,9 +17,6 @@ from copy import deepcopy
 import os
 
 matplotlib.use("pdf")
-import pickle
-from timeit import default_timer as timer
-from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
@@ -76,7 +82,8 @@ def train(dataset, dataset_validation, args, batchsize):
     training_loader = DataLoader(dataset, batch_size=batchsize)
     validation_loader = DataLoader(dataset_validation, batch_size=batchsize)
 
-    model = models.GNNStack(dataset[0].num_feature_actual, args.hidden_dim, 1, args)
+    model = models.GNNStack(
+        dataset[0].num_feature_actual, args.hidden_dim, 1, args)
 
     model.to(device)
     scheduler, opt = utils.build_optimizer(args, model.parameters())
@@ -116,7 +123,8 @@ def train(dataset, dataset_validation, args, batchsize):
         model.train()
         train_mask_all = None
 
-        t = tqdm(total=len(training_loader), colour='green', bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')
+        t = tqdm(total=len(training_loader), colour='green',
+                 bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')
         loss_avg = utils.RunningAverage()
         for batch in training_loader:
             # to determine if the model converges; if so, then stop the training
@@ -182,7 +190,8 @@ def train(dataset, dataset_validation, args, batchsize):
                 # update the best model and test on the testing dataset
                 if valid_auc > best_validation_auc:
                     best_validation_auc = valid_auc
-                    torch.save(model.state_dict(), path + "/best_valid_model.pt")
+                    torch.save(model.state_dict(), path +
+                               "/best_valid_model.pt")
 
                 if valid_loss >= lowest_valid_loss:
                     print(
@@ -292,15 +301,20 @@ def test(loader, model, indicator, epoch, args):
 
     utils.plot_roc([label_all_chg, label_all_chg],
                    [pred_all_chg, puppi_all_chg],
-                   legends=["prediction Chg", "PUPPI Chg", "prediction Neu", "PUPPI Neu"],
+                   legends=["prediction Chg", "PUPPI Chg",
+                            "prediction Neu", "PUPPI Neu"],
                    postfix=postfix + "_test", dir_name=args.save_dir)
     fig_name_prediction = utils.plot_discriminator(epoch,
-                                                   [pred_all_chg[label_all_chg == 1], pred_all_chg[label_all_chg == 0]],
-                                                   legends=['LV Neutral', 'PU Neutral'],
+                                                   [pred_all_chg[label_all_chg == 1],
+                                                       pred_all_chg[label_all_chg == 0]],
+                                                   legends=[
+                                                       'LV Neutral', 'PU Neutral'],
                                                    postfix=postfix + "_prediction", label='Prediction', dir_name=args.save_dir)
     fig_name_puppi = utils.plot_discriminator(epoch,
-                                              [puppi_all_chg[label_all_chg == 1], puppi_all_chg[label_all_chg == 0]],
-                                              legends=['LV Neutral', 'PU Neutral'],
+                                              [puppi_all_chg[label_all_chg == 1],
+                                                  puppi_all_chg[label_all_chg == 0]],
+                                              legends=[
+                                                  'LV Neutral', 'PU Neutral'],
                                               postfix=postfix + "_puppi", label='PUPPI Weight', dir_name=args.save_dir)
 
     return total_loss, acc_chg, auc_chg, acc_chg_puppi, auc_chg_puppi, fig_name_prediction
@@ -318,7 +332,8 @@ def generate_mask(dataset):
         graph.num_feature_actual = graph.num_features
         Neutral_index = graph.Neutral_index
         Neutral_feature = graph.x[Neutral_index]
-        Neutral_index = Neutral_index[torch.where(Neutral_feature[:, 2] > 0.5)[0]]
+        Neutral_index = Neutral_index[torch.where(
+            Neutral_feature[:, 2] > 0.5)[0]]
         training_mask = Neutral_index
 
         # construct mask vector for training and testing

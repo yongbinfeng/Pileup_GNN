@@ -7,8 +7,8 @@ import numpy as np
 import argparse
 import torch
 from torch_geometric.data import DataLoader
-import models_fastsim as models
-import utils
+import models.models as models
+import utils.utils
 import matplotlib
 from copy import deepcopy
 import os
@@ -312,7 +312,7 @@ def test(loader, model, indicator, epoch, args):
             data = data.to(device)
             # max(dim=1) returns values, indices tuple; only need indices
             pred, pred_hybrid = model.forward(data)
-            #puppi = data.x[:, data.num_feature_actual[0].item() - 1]
+            # puppi = data.x[:, data.num_feature_actual[0].item() - 1]
             puppi = data.pWeight
             label = data.y
 
@@ -456,11 +456,11 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
                                             torch.ones(graph.num_nodes, 1)), 1)
         pdgId_one_hot_training = pdgId_one_hot_training.type(torch.float32)
 
-        #pf_dz_training_test = torch.clone(original_feature[:, 6:7])
+        # pf_dz_training_test = torch.clone(original_feature[:, 6:7])
         # print ("pf_dz_training_test: ", pf_dz_training_test)
         # print ("pf_dz_training_test: ", pf_dz_training_test.shape)
         # pf_dz_training_test[[training_mask.tolist()],0]=0
-        #pf_dz_training_test = torch.zeros(graph.num_nodes, 1)
+        # pf_dz_training_test = torch.zeros(graph.num_nodes, 1)
 
         # print ("pf_dz_training_test: ", pf_dz_training_test)
         # print ("puppiWeight_default_one_hot_training size: ", puppiWeight_default_one_hot_training.size())
