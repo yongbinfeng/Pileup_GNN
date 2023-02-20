@@ -35,26 +35,16 @@ jupyter notebook --allow-root --no-browser --port 8888 --ip 0.0.0.0
 ### SetUp
 The code contains three major ingredients: graph generation, training, and performance testing.
 
-## Note ##
-- Don't forget to change the directory of your downloaded raw datasets in prepare dataset files. \
-(line 75, 84 in `prepare_dataset_fastsim.py` and line 20 in `prepare_dataset_realsim.py`)
-- Also, note when running prepare dataset files for graph construction. The graphs will be saved to the directory that you run the code. If you want to save the graph to another directory, specify the full path plus name using args.name argument.
-- Don't forget to change the parent directory in training and testing files. \
-(second line of `train` function in `general_test.py`, `test_fastsim_semi.py`, `test_fastsim_sup.py`, `train_fastsim_semi.py` and `train_fastsim_sup.py`)\
-(second line of `plot_discriminator` function in `utils.py`)
-
-
-## Construct graphs ##
-- In `/datasets`, `prepare_dataset_fastsim.py` and `prepare_dataset_realsim.py` are the files to construct graphs for fast simulation and real simulation dataset
-- Download the datasets to the `/dataset` directory
-- graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.8.
+### Build graphs ##
+- In `/datasets`, `creatingGraph.py` is the script to construct graphs for dataset.
+- Download the datasets and change the `iname` variable to the location.
+- graph is constructed by connecting particles that are less than some threshold of `deltaR`, you can specify the `deltaR` when running the files. The default is 0.4.
 - The number of events you want to construct graphs for can be passed as an argument `num_events`
 - The starting event can also be specified using argument `start_event`
-- `name` argument helps specify the name you want to save the constructed graphs with
-- For example, to construct graphs for fast simlation dataset with `deltaR` 0.4 with 3000 events starting from event 0. Run
-```bash
- python prepare_dataset_fastsim.py --deltaR 0.4 --num_events 3000 --start_event 0 --name "datasets_fastsim_3000_deltar04_start0"
- ```
+- `oname` argument helps specify the name you want to save the constructed graphs with
+##### ToDOs:
+- [ ] Add the parser to the script so that you can specify the arguments when running the script
+- [ ] The conversion from awkward arrays to pandas dataframes can probably be avoided. The graph construction can be done directly on the awkward arrays. There might also be better ways to speed up the graph construction.
 
 ## Training ##
 Before start training the models, you should first run `prepare_dataset.py` in `/datasets` to construct the training and validation graphs as instructed in **Construct graphs** section.\
@@ -101,3 +91,12 @@ Testing can be done on both charged and neutral particles for semi-supervised le
  
 ## Saved models ##
 There are some pretrained models included in `/saved_models` directory. They can be directly loaded for testing without the training phase following the Testing procedure described above.
+
+
+## Note ##
+- Don't forget to change the directory of your downloaded raw datasets in prepare dataset files. \
+(line 75, 84 in `prepare_dataset_fastsim.py` and line 20 in `prepare_dataset_realsim.py`)
+- Also, note when running prepare dataset files for graph construction. The graphs will be saved to the directory that you run the code. If you want to save the graph to another directory, specify the full path plus name using args.name argument.
+- Don't forget to change the parent directory in training and testing files. \
+(second line of `train` function in `general_test.py`, `test_fastsim_semi.py`, `test_fastsim_sup.py`, `train_fastsim_semi.py` and `train_fastsim_sup.py`)\
+(second line of `plot_discriminator` function in `utils.py`)

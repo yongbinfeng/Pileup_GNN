@@ -15,13 +15,13 @@ from scipy.spatial import distance
 np.random.seed(0)
 
 
-def gen_dataframe(num_event, num_start=0):
+def gen_dataframe(rfilename, num_event, num_start=0):
     """
-    select pfcands from original root and convert to a dataframe
+    select pfcands from original root and convert to a pandas dataframe.
+    Returned is a list of dataframes, with one dataframe for one event.
     """
     print(f"reading events from {num_start} to {num_start+num_event}")
-    filename = "/Workdir/data/output_2.root"
-    tree = uproot.open(filename)["Events"]
+    tree = uproot.open(rfilename)["Events"]
     pfcands = tree.arrays(filter_name="PF_*", entry_start=num_start,
                           entry_stop=num_event + num_start)
     genparts = tree.arrays(filter_name="packedGenPart_*",
@@ -63,10 +63,14 @@ def gen_dataframe(num_event, num_start=0):
     return df_pf_list, df_gen_list
 
 
-def prepare_dataset(num_event, num_start=0):
+def prepare_dataset(rfilename, num_event, num_start=0):
+    """
+    process each dataframe, prepare the ingredients for graphs (edges, node features, labels, etc).
+    Returned is a list of graphs (torch.geometric data), with one graph for one event.
+    """
     data_list = []
 
-    df_pf_list, df_gen_list = gen_dataframe(num_event, num_start)
+    df_pf_list, df_gen_list = gen_dataframe(rfilename, num_event, num_start)
 
     PTCUT = 0.5
 
@@ -192,20 +196,26 @@ def prepare_dataset(num_event, num_start=0):
 def main():
     start = timer()
 
-    num_events_train = 8000
-    dataset_train = prepare_dataset(num_events_train)
-    with open("../data_pickle/dataset_graph_puppi_" + str(num_events_train), "wb") as fp:
+    iname = "/Workdir/data/output_2.root"
+    num_events_train = 4000
+    oname = "../data_pickle/dataset_graph_puppi_" + str(num_events_train)
+    dataset_train = prepare_dataset(iname, num_events_train)
+    # save outputs in pickle format
+    with open(oname, "wb") as fp:
         pickle.dump(dataset_train, fp)
 
-    # num_events_test = 3000
-    # dataset_test = prepare_dataset(num_events_test, num_events_train)
-    # with open("../data_pickle/dataset_graph_puppi_test_" + str(num_events_test), "wb") as fp:
-    #    pickle.dump(dataset_train, fp)
+    num_events_test = 1000
+    oname = "../data_pickle/dataset_graph_puppi_test_" + str(num_events_test)
+    dataset_test = prepare_dataset(iname, num_events_test, num_events_train)
+    with open(oname + str(num_events_test), "wb") as fp:
+        pickle.dump(dataset_train, fp)
 
-    # num_events_valid = 2000
-    # dataset_valid = prepare_dataset(num_events_valid, num_events_train)
-    # with open("dataset_graph_puppi_val_" + str(num_events_valid), "wb") as fp:
-    #    pickle.dump(dataset_valid, fp)
+    num_events_valid = 1000
+    oname = "../data_pickle/dataset_graph_puppi_val_" + str(num_events_valid)
+    dataset_valid = prepare_dataset(
+        iname, num_events_valid, num_events_train + num_events_test)
+    with open(oname, "wb") as fp:
+        pickle.dump(dataset_valid, fp)
 
     end = timer()
     program_time = end - start
