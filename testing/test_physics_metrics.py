@@ -468,7 +468,7 @@ def main(modelname, filelists):
 
     # plot the differences
     def getResol(input):
-    return (np.quantile(input, 0.84) - np.quantile(input, 0.16))/2
+        return (np.quantile(input, 0.84) - np.quantile(input, 0.16))/2
 
     def getStat(input):
         return float(np.median(input)), float(getResol(input))
