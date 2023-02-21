@@ -8,8 +8,8 @@ from pyjet import cluster, DTYPE_PTEPM
 import argparse
 import torch
 from torch_geometric.data import DataLoader
-import models.models as models
-import utils.utils
+import models as models
+import utils
 import matplotlib
 from copy import deepcopy
 import os
@@ -462,13 +462,13 @@ def main(modelname, filelists):
     modelcolls['gated_boost'] = model_gated_boost
 
     # run the tests
-    filelists = ["/Workdir/data_pickle/dataset_graph_puppi_8000"]
+    filelists = ["../data_pickle/dataset_graph_puppi_8000"]
     mets_truth, performances_jet_puppi, mets_puppi, performances_jet_puppi_wcut, mets_puppi_wcut, performances_jet_pred, mets_pred = test(
         filelists, modelcolls)
 
     # plot the differences
     def getResol(input):
-    return (np.quantile(input, 0.84) - np.quantile(input, 0.16))/2
+        return (np.quantile(input, 0.84) - np.quantile(input, 0.16))/2
 
     def getStat(input):
         return float(np.median(input)), float(getResol(input))
@@ -481,7 +481,7 @@ def main(modelname, filelists):
 
     linewidth = 1.5
 
-    %matplotlib inline
+   #  %matplotlib inline
     plt.style.use(hep.style.ROOT)
     fig = plt.figure(figsize=(10, 8))
     mass_diff = np.array([getattr(perf, "mass_diff")
@@ -552,6 +552,6 @@ def main(modelname, filelists):
 
 
 if __name__ == '__main__':
-    modelname = "/Workdir/fast_simulation/test/best_valid_model.pt"
-    filelists = ["/Workdir/data_pickle/dataset_graph_puppi_8000"]
+    modelname = "test/best_valid_model.pt"
+    filelists = ["../data_pickle/dataset_graph_puppi_8000"]
     main(modelname, filelists)
