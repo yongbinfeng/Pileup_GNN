@@ -1,5 +1,6 @@
 import math
 from tqdm import tqdm
+from collections import OrderedDict
 from timeit import default_timer as timer
 import pickle
 import random
@@ -7,11 +8,16 @@ import numpy as np
 import argparse
 import torch
 from torch_geometric.data import DataLoader
-import models.models as models
-import utils.utils
+import models as models
+import utils
+import test_physics_metrics as phym
 import matplotlib
 from copy import deepcopy
 import os
+import matplotlib.pyplot as plt
+import mplhep as hep
+
+hep.set_style(hep.style.CMS)
 
 matplotlib.use("pdf")
 
@@ -45,7 +51,7 @@ def arg_parse():
                         help='directory to save trained model and plots')
 
     parser.set_defaults(model_type='Gated',
-                        num_layers=2,
+                        num_layers=3,
                         batch_size=4,
                         hidden_dim=20,
                         dropout=0,
@@ -53,8 +59,8 @@ def arg_parse():
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
-                        training_path="data_pickle/dataset_graph_puppi_3000",
-                        validation_path="data_pickle/dataset_graph_puppi_test_3000",
+                        training_path="../data_pickle/dataset_graph_puppi_20000",
+                        validation_path="../data_pickle/dataset_graph_puppi_val_4000",
                         save_dir="test",
                         )
 
@@ -81,7 +87,7 @@ def train(dataset, dataset_validation, args, batchsize):
         num_select_PU = 45
     elif args.pulevel == 80:
         num_select_LV = 5
-        num_select_PU = 40
+        num_select_PU = 11
     else:
         num_select_LV = 6
         num_select_PU = 282
@@ -96,6 +102,8 @@ def train(dataset, dataset_validation, args, batchsize):
         dataset[0].num_feature_actual, args.hidden_dim, 1, args)
     model.to(device)
     scheduler, opt = utils.build_optimizer(args, model.parameters())
+
+    
 
     # train
     #
@@ -127,6 +135,24 @@ def train(dataset, dataset_validation, args, batchsize):
     valid_accuracy_puppi_neu = []
     train_fig_names = []
     valid_fig_names = []
+
+    train_graph_SSLMassdiffMu = []
+    train_graph_PUPPIMassdiffMu = []
+    train_graph_SSLMassSigma = []
+    train_graph_PUPPIMassSigma = []
+    train_graph_SSLPtdiffMu = []
+    train_graph_SSLPtSigma = []
+    train_graph_PUPPIPtdiffMu = []
+    train_graph_PUPPIPtSigma = []
+
+    valid_graph_SSLMassdiffMu = []
+    valid_graph_PUPPIMassdiffMu = []
+    valid_graph_SSLMassSigma = []
+    valid_graph_PUPPIMassSigma = []
+    valid_graph_SSLPtdiffMu = []
+    valid_graph_SSLPtSigma = []
+    valid_graph_PUPPIPtdiffMu = []
+    valid_graph_PUPPIPtSigma = []
 
     count_event = 0
     best_validation_auc = 0
@@ -192,17 +218,24 @@ def train(dataset, dataset_validation, args, batchsize):
             t.update()
 
             if count_event % 1000 == 0:
+
+                modelcolls = OrderedDict()
+                modelcolls['gated_boost'] = model
                 training_loss, training_loss_hybrid, train_acc, train_auc, train_auc_hybrid, \
                     train_puppi_acc, train_puppi_auc, \
                     train_acc_neu, train_auc_neu, train_auc_neu_hybrid, \
-                    train_puppi_acc_neu, train_puppi_auc_neu, train_fig_name = test(
-                        training_loader, model, 0, count_event, args)
+                    train_puppi_acc_neu, train_puppi_auc_neu, train_fig_name, train_SSLMassdiffMu, \
+                    train_SSLMassSigma, train_PUPPIMassdiffMu, train_PUPPIMassSigma, train_SSLPtdiffMu, train_SSLPtSigma, \
+                    train_PUPPIPtdiffMu, train_PUPPIPtSigma = test(
+                        training_loader, model, 0, count_event, args, modelcolls, args.training_path)
 
                 valid_loss, valid_loss_hybrid, valid_acc, valid_auc, valid_auc_hybrid, \
                     valid_puppi_acc, valid_puppi_auc, \
                     valid_acc_neu, valid_auc_neu, valid_auc_neu_hybrid, \
-                    valid_puppi_acc_neu, valid_puppi_auc_neu, valid_fig_name = test(
-                        validation_loader, model, 1, count_event, args)
+                    valid_puppi_acc_neu, valid_puppi_auc_neu, valid_fig_name, valid_SSLMassdiffMu, \
+                    valid_SSLMassSigma, valid_PUPPIMassdiffMu, valid_PUPPIMassSigma, valid_SSLPtdiffMu, valid_SSLPtSigma, \
+                    valid_PUPPIPtdiffMu, valid_PUPPIPtSigma  = test(
+                        validation_loader, model, 1, count_event, args, modelcolls, args.validation_path)
 
                 epochs_valid.append(count_event)
                 loss_graph_valid.append(valid_loss)
@@ -229,11 +262,29 @@ def train(dataset, dataset_validation, args, batchsize):
                 train_fig_names.append(train_fig_name)
                 valid_fig_names.append(valid_fig_name)
 
+                train_graph_SSLMassdiffMu.append(train_SSLMassdiffMu)
+                train_graph_PUPPIMassdiffMu.append(train_PUPPIPtdiffMu)
+                train_graph_SSLMassSigma.append(train_SSLMassSigma)
+                train_graph_PUPPIMassSigma.append(train_PUPPIMassSigma)
+                train_graph_SSLPtdiffMu.append(train_SSLPtdiffMu)
+                train_graph_SSLPtSigma.append(train_SSLPtSigma)
+                train_graph_PUPPIPtdiffMu.append(train_PUPPIPtdiffMu)
+                train_graph_PUPPIPtSigma.append(train_PUPPIPtSigma)
+
+                valid_graph_SSLMassdiffMu.append(valid_SSLMassdiffMu)
+                valid_graph_PUPPIMassdiffMu.append(valid_PUPPIMassdiffMu)
+                valid_graph_SSLMassSigma.append(valid_SSLMassSigma)
+                valid_graph_PUPPIMassSigma.append(valid_PUPPIMassSigma)
+                valid_graph_SSLPtdiffMu.append(valid_SSLPtdiffMu)
+                valid_graph_SSLPtSigma.append(valid_SSLPtSigma)
+                valid_graph_PUPPIPtdiffMu.append(valid_PUPPIPtdiffMu)
+                valid_graph_PUPPIPtSigma.append(valid_PUPPIPtSigma)
+
                 if valid_auc > best_validation_auc:
                     best_validation_auc = valid_auc
-                    print("model is saved in " + path + "/best_valid_model.pt")
+                    print("model is saved in " + path + "/best_valid_model_nPU11_deeper.pt")
                     torch.save(model.state_dict(), path +
-                               "/best_valid_model.pt")
+                               "/best_valid_model_nPU11_deeper.pt")
 
                 if valid_loss >= lowest_valid_loss:
                     print(
@@ -253,7 +304,7 @@ def train(dataset, dataset_validation, args, batchsize):
                     print("lowest valid loss " + str(valid_loss))
                     lowest_valid_loss = valid_loss
 
-                if count_event == 30000:
+                if count_event == 5000:
                     converge = True
                     break
 
@@ -271,6 +322,49 @@ def train(dataset, dataset_validation, args, batchsize):
                         auc_graph_neu_train, auc_graph_train_puppi_neu,
                         auc_graph_neu_valid, auc_graph_valid_puppi_neu, dir_name=args.save_dir
                         )
+    plt.figure()
+    plt.plot(epochs_valid, train_graph_SSLMassdiffMu, label = 'Semi-supervised_train_JetMass, $\mu$', linestyle = 'solid', linewidth = 1, color = 'g')
+    plt.plot(epochs_valid, valid_graph_SSLMassdiffMu, label = 'Semi-supervised_valid_JetMass, $\mu$', linestyle = 'solid', linewidth = 1, color = 'b')
+    plt.plot(epochs_valid, train_graph_PUPPIMassdiffMu, label = 'PUPPI_train_JetMass, $\mu$', linestyle = 'solid', linewidth = 1, color = 'r')
+    #plt.plot(epochs_valid, valid_graph_PUPPIMassdiffMu, label = 'PUPPI_valid_JetMass, $\mu$', linestyle = 'solid', linewidth = 1, color = 'o')
+    plt.xlabel('Epochs')
+    plt.ylabel('mean diff')
+    plt.legend(loc=4)
+    plt.savefig(args.save_dir + "/Jet_mass_diff_mean.pdf")
+    plt.close()
+
+    plt.figure()
+    plt.plot(epochs_valid, train_graph_SSLPtdiffMu, label = 'Semi-supervised_train_JetPt, $\mu$', linestyle = 'solid', linewidth = 1, color = 'g')
+    plt.plot(epochs_valid, valid_graph_SSLPtdiffMu, label = 'Semi-supervised_valid_JetPt, $\mu$', linestyle = 'solid', linewidth = 1, color = 'b')
+    plt.plot(epochs_valid, train_graph_PUPPIPtdiffMu, label = 'PUPPI_train_JetPt, $\mu$', linestyle = 'solid', linewidth = 1, color = 'r')
+    #plt.plot(epochs_valid, valid_graph_PUPPIPtdiffMu, label = 'PUPPI_valid_JetPt, $\mu$', linestyle = 'solid', linewidth = 1, color = 'o')
+    plt.xlabel('Epochs')
+    plt.ylabel('mean diff')
+    plt.legend(loc=4)
+    plt.savefig(args.save_dir + "/Jet_pt_diff_mean.pdf")
+    plt.close()
+
+    plt.figure()
+    plt.plot(epochs_valid, train_graph_SSLMassSigma, label = 'Semi-supervised_train_JetMass, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'g')
+    plt.plot(epochs_valid, valid_graph_SSLMassSigma, label = 'Semi-supervised_valid_JetMass, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'b')
+    plt.plot(epochs_valid, train_graph_PUPPIMassSigma, label = 'PUPPI_train_JetMass, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'r')
+    #plt.plot(epochs_valid, valid_graph_PUPPIMassSigma, label = 'PUPPI_valid_JetMass, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'o')
+    plt.xlabel('Epochs')
+    plt.ylabel('sigma diff')
+    plt.legend(loc=4)
+    plt.savefig(args.save_dir + "/Jet_mass_diff_sigma.pdf")
+    plt.close()
+
+    plt.figure()
+    plt.plot(epochs_valid, train_graph_SSLPtSigma, label = 'Semi-supervised_train_JetPt, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'g')
+    plt.plot(epochs_valid, valid_graph_SSLPtSigma, label = 'Semi-supervised_valid_JetPt, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'b')
+    plt.plot(epochs_valid, train_graph_PUPPIPtSigma, label = 'PUPPI_train_JetPt, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'r')
+    #plt.plot(epochs_valid, valid_graph_PUPPIPtSigma, label = 'PUPPI_valid_JetPt, $\sigma$', linestyle = 'solid', linewidth = 1, color = 'o')
+    plt.xlabel('Epochs')
+    plt.ylabel('sigma diff')
+    plt.legend(loc=4)
+    plt.savefig(args.save_dir + "/Jet_pt_diff_sigma.pdf")
+    plt.close()
 
     # utils.plot_training(epochs_train, epochs_valid, loss_graph_train,
     #                   loss_graph, auc_graph_train, train_accuracy_neu,
@@ -280,7 +374,7 @@ def train(dataset, dataset_validation, args, batchsize):
     #                   )
 
 
-def test(loader, model, indicator, epoch, args):
+def test(loader, model, indicator, epoch, args, modelcolls, pathname):
     if indicator == 0:
         postfix = 'Train'
     elif indicator == 1:
@@ -381,9 +475,9 @@ def test(loader, model, indicator, epoch, args):
     acc_neu = utils.get_acc(label_all_neu, pred_all_neu)
     acc_neu_puppi = utils.get_acc(label_all_neu, puppi_all_neu)
 
-    utils.plot_roc([label_all_chg, label_all_neu],
-                   [pred_all_chg,  pred_all_neu],
-                   legends=["prediction Chg", "prediction Neu"],
+    utils.plot_roc([label_all_chg],
+                   [pred_all_chg],
+                   legends=["prediction Chg"],
                    postfix=postfix + "_test", dir_name=args.save_dir)
 
     fig_name_prediction = utils.plot_discriminator(epoch,
@@ -400,9 +494,91 @@ def test(loader, model, indicator, epoch, args):
                                               legends=[
                                                   'LV Chg', 'PU Chg', 'LV Neu', 'PU Neu'],
                                               postfix=postfix + "_puppi", label='PUPPI Weight', dir_name=args.save_dir)
+    
+    filelists = []
+    filelists.append(pathname)
+
+    mets_truth, performances_jet_CHS, performances_jet_puppi, mets_puppi, performances_jet_puppi_wcut, mets_puppi_wcut, performances_jet_pred, mets_pred, neu_weight, neu_puppiweight, chlv_weight, chpu_weight, chlv_puppiweight, chpu_puppiweight, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS =phym.test(
+        filelists, modelcolls)
+
+    # plot the differences
+    def getResol(input):
+        return (np.quantile(input, 0.84) - np.quantile(input, 0.16))/2
+
+    def getStat(input):
+        return float(np.median(input)), float(getResol(input))
+
+    performances_jet_pred0 = performances_jet_pred['gated_boost']
+    # performances_jet_pred4 = performances_jet_pred['gated_boost_sp']
+
+    mets_pred0 = mets_pred['gated_boost']
+    # mets_pred4 = mets_pred['gated_boost_sp']
+
+    linewidth = 1.5
+    fontsize = 18
+
+    plt.style.use(hep.style.ROOT)
+    fig = plt.figure(figsize=(10, 8))
+    mass_diff = np.array([getattr(perf, "mass_diff")
+                         for perf in performances_jet_pred0])
+    print(mass_diff)
+    plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='blue', linewidth=linewidth,
+             density=True, label=r'Semi-supervised, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
+    SSLMassdiffMu, SSLMassSigma = getStat(mass_diff)
+    mass_diff = np.array([getattr(perf, "mass_diff")
+                         for perf in performances_jet_puppi])
+    plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='green', linewidth=linewidth, 
+             density=True, label=r'PUPPI, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
+    PUPPIMassdiffMu, PUPPIMassSigma = getStat(mass_diff)
+    mass_diff = np.array([getattr(perf, "mass_diff")
+                         for perf in performances_jet_puppi_wcut])
+    plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='red', linewidth=linewidth, 
+             density=True, label=r'PF, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
+    mass_diff = np.array([getattr(perf, "mass_diff")
+                         for perf in performances_jet_CHS])
+    plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='orange', linewidth=linewidth, 
+             density=True, label=r'CHS, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
+    # plt.xlim(-1.0,1.3)
+    plt.xlabel(r"Jet Mass $(m_{reco} - m_{truth})/m_{truth}$ Epoch"+str(epoch)+postfix)
+    plt.ylabel('density')
+    plt.ylim(0, 3.6)
+    plt.rc('legend', fontsize=fontsize)
+    plt.legend()
+    plt.savefig(args.save_dir+"/prob_plots/Jet_mass_diff_"+postfix+str(epoch)+".pdf")
+    plt.show()
+
+    fig = plt.figure(figsize=(10, 8))
+
+    pt_diff = np.array([getattr(perf, "pt_diff")
+                       for perf in performances_jet_pred0])
+    plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='blue', linewidth=linewidth, 
+             density=True, label=r'Semi-supevised, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
+    SSLPtdiffMu, SSLPtSigma = getStat(pt_diff)
+    pt_diff = np.array([getattr(perf, "pt_diff")
+                       for perf in performances_jet_puppi])
+    plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='green', linewidth=linewidth, 
+             density=True, label=r'PUPPI, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
+    PUPPIPtdiffMu, PUPPIPtSigma = getStat(pt_diff)
+    pt_diff = np.array([getattr(perf, "pt_diff")
+                       for perf in performances_jet_puppi_wcut])
+    plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='red', linewidth=linewidth, 
+             density=True, label=r'PF, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
+    pt_diff = np.array([getattr(perf, "pt_diff")
+                       for perf in performances_jet_CHS])
+    plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='orange', linewidth=linewidth, 
+             density=True, label=r'CHS, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
+    # plt.xlim(0,40)
+    plt.ylim(0, 7)
+    plt.xlabel(r"Jet $p_{T}$ $(p^{reco}_{T} - p^{truth}_{T})/p^{truth}_{T}$ Epoch"+str(epoch)+postfix)
+    plt.ylabel('density')
+    plt.rc('legend', fontsize=fontsize)
+    plt.legend()
+    plt.show()
+    plt.savefig(args.save_dir+"/prob_plots/Jet_pT_diff_"+postfix+str(epoch)+".pdf")
 
     return total_loss, total_loss_hybrid, acc_chg, auc_chg, auc_chg_hybrid, acc_chg_puppi, auc_chg_puppi, \
-        acc_neu, auc_neu, auc_neu_hybrid, acc_neu_puppi, auc_neu_puppi, fig_name_prediction
+        acc_neu, auc_neu, auc_neu_hybrid, acc_neu_puppi, auc_neu_puppi, fig_name_prediction, SSLMassdiffMu, \
+        SSLMassSigma, PUPPIMassdiffMu, PUPPIMassSigma, SSLPtdiffMu, SSLPtSigma, PUPPIPtdiffMu, PUPPIPtSigma
 
 
 def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
