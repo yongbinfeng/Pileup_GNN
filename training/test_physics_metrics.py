@@ -36,19 +36,19 @@ hep.set_style(hep.style.CMS)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
+testneu = 1
 
-
-def deltaPhiNew(dphis):
+def NormaliseDeltaPhi(dphis):
     dphis = np.where(dphis > np.pi, dphis - 2*np.pi, dphis)
     dphis = np.where(dphis < -np.pi, dphis + 2*np.pi, dphis)
     return dphis
 
 
-def deltaRNew(detas, dphis):
+def NormaliseDeltaRNew(detas, dphis):
     """
     calculate the deltaR based on the input deta and phi
     """
-    dphis = deltaPhiNew(dphis)
+    dphis = NormaliseDeltaPhi(dphis)
     dR = np.sqrt(detas**2 + dphis**2)
     return dR
 
@@ -170,7 +170,7 @@ def clusterJets(pt, eta, phi, ptcut=0., deltaR=0.4):
     with pyjet clustering algo
     """
     # cleaning zero pt-ed objects
-    #deltaR=0.8
+    deltaR=0.8
     pt_wptcut = pt[pt > ptcut]
     eta_wptcut = eta[pt > ptcut]
     phi_wptcut = phi[pt > ptcut]
@@ -179,7 +179,7 @@ def clusterJets(pt, eta, phi, ptcut=0., deltaR=0.4):
     event = np.column_stack((pt_wptcut, eta_wptcut, phi_wptcut, mass_wptcut))
     event.dtype = DTYPE_PTEPM
     sequence = cluster(event, R=deltaR, p=-1)
-    jets = sequence.inclusive_jets(ptmin=30)
+    jets = sequence.inclusive_jets(ptmin=300)
     #charged only
     #jets = sequence.inclusive_jets(ptmin=20)
 
@@ -306,7 +306,7 @@ def postProcessing(data, preds):
     # set all particle masses to zero
     mass = np.zeros(pt.shape[0])
 
-    testneu = 1
+    #testneu = 1
 
     # remove pt < 0.5 particles
     pt[pt < 0.01] = 0
