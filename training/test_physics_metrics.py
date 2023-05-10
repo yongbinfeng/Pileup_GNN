@@ -37,8 +37,6 @@ hep.set_style(hep.style.CMS)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(torch.cuda.is_available())
 testneu = 1
-# Options to Chg+Neu or Chg only
-
 
 def NormaliseDeltaPhi(dphis):
     dphis = np.where(dphis > np.pi, dphis - 2*np.pi, dphis)
@@ -165,15 +163,14 @@ class PerformanceMetrics(object):
         dR_diff = 0.
 
 
-def clusterJets(pt, eta, phi, ifAK8, ptcut=0., deltaR=0.4):
+def clusterJets(pt, eta, phi, ptcut=0., deltaR=0.4):
     """
     cluster the jets based on the array of pt, eta, phi,
     of all particles (masses are assumed to be zero),
     with pyjet clustering algo
     """
     # cleaning zero pt-ed objects
-    if ifAK8==1:
-      deltaR=0.8
+    deltaR=0.8
     pt_wptcut = pt[pt > ptcut]
     eta_wptcut = eta[pt > ptcut]
     phi_wptcut = phi[pt > ptcut]
@@ -182,10 +179,7 @@ def clusterJets(pt, eta, phi, ifAK8, ptcut=0., deltaR=0.4):
     event = np.column_stack((pt_wptcut, eta_wptcut, phi_wptcut, mass_wptcut))
     event.dtype = DTYPE_PTEPM
     sequence = cluster(event, R=deltaR, p=-1)
-    Ptmin = 30
-    if ifAK8:
-        Ptmin = 300
-    jets = sequence.inclusive_jets(ptmin=Ptmin)
+    jets = sequence.inclusive_jets(ptmin=300)
     #charged only
     #jets = sequence.inclusive_jets(ptmin=20)
 
@@ -287,7 +281,7 @@ def ExtractJet(jets):
     return njets, ptlist, etalist, philist, masslist
 
 
-def postProcessing(data, preds,ifAK8):
+def postProcessing(data, preds):
     """
     reconstruct jet and MET,
     compare the reco-ed jet and MET with truth ones,
@@ -312,7 +306,7 @@ def postProcessing(data, preds,ifAK8):
     # set all particle masses to zero
     mass = np.zeros(pt.shape[0])
 
-    
+    #testneu = 1
 
     # remove pt < 0.5 particles
     pt[pt < 0.01] = 0
@@ -376,20 +370,20 @@ def postProcessing(data, preds,ifAK8):
     # pt_pred2 = pt * pred2
 
     # cluster jets with truth particles
-    jets_truth = clusterJets(pt_truth, eta_truth, phi_truth, ifAK8)
+    jets_truth = clusterJets(pt_truth, eta_truth, phi_truth)
     # print (jets_truth)
     njets_truth, pt_jets_truth, eta_jets_truth, phi_jets_truth, mass_jets_truth = ExtractJet(jets_truth)
 
     
-    jets_puppi = clusterJets(pt_puppi, eta, phi, ifAK8)
+    jets_puppi = clusterJets(pt_puppi, eta, phi)
     njets_puppi, pt_jets_puppi, eta_jets_puppi, phi_jets_puppi, mass_jets_puppi = ExtractJet(jets_puppi)
     performances_jet_puppi = compareJets(jets_truth, jets_puppi)
 
-    jets_puppi_wcut = clusterJets(pt_puppi_wcut, eta, phi, ifAK8)
+    jets_puppi_wcut = clusterJets(pt_puppi_wcut, eta, phi)
     njets_pf, pt_jets_pf, eta_jets_pf, phi_jets_pf, mass_jets_pf = ExtractJet(jets_puppi_wcut)
     performances_jet_puppi_wcut = compareJets(jets_truth, jets_puppi_wcut)
 
-    jets_CHS = clusterJets(pt_CHS, eta, phi, ifAK8)
+    jets_CHS = clusterJets(pt_CHS, eta, phi)
     njets_CHS, pt_jets_CHS, eta_jets_CHS, phi_jets_CHS, mass_jets_CHS = ExtractJet(jets_CHS)
     performances_jet_CHS = compareJets(jets_truth, jets_CHS)
 
@@ -457,7 +451,7 @@ def postProcessing(data, preds,ifAK8):
             predcopyA[charge_index] = puppi[charge_index]
         
         pt_pred = pt * predcopyA
-        jets_pred = clusterJets(pt_pred,  eta, phi, ifAK8)
+        jets_pred = clusterJets(pt_pred,  eta, phi)
         njets_pred, pt_jets_pred, eta_jets_pred, phi_jets_pred, mass_jets_pred = ExtractJet(jets_pred)
         performance_jet_pred = compareJets(jets_truth, jets_pred)
 
@@ -537,10 +531,6 @@ def test(filelists, models={}):
         generate_mask(dataset)
         data = DataLoader(dataset, batch_size=1)
         loader = data
-
-        ifAK8 = 0
-        if (ifile=="data_pickle/dataset_graph_puppi_test_Wjets4000"):
-            ifAK8 = 1
         
 
         for data in loader:
@@ -566,7 +556,7 @@ def test(filelists, models={}):
                     preds.append(pred)
 
                 met_truth, perfs_jet_CHS, perfs_jet_puppi, met_puppi, perfs_jet_puppi_wcut, met_puppi_wcut, perfs_jet_pred, mets_fromF_pred, neus_pred, neus_puppi, chlvs_pred, chpus_pred, chlvs_puppi, chpus_puppi, Njets_pf, Njets_pred, Njets_puppi, Njets_truth, Njets_CHS, Pt_jets_pf, Pt_jets_pred, Pt_jets_puppi, Pt_jets_truth, Pt_jets_CHS, Eta_jets_pf, Eta_jets_pred, Eta_jets_puppi, Eta_jets_truth, Eta_jets_CHS, Phi_jets_pf, Phi_jets_pred, Phi_jets_puppi, Phi_jets_truth, Phi_jets_CHS, Mass_jets_pf, Mass_jets_pred, Mass_jets_puppi, Mass_jets_truth, Mass_jets_CHS = postProcessing(
-                    data, preds, ifAK8)
+                    data, preds)
                 # perfs_jet_puppi, perfs_jet_puppi_wcut, perfs_jet_pred, perfs_jet_pred2, met_truth, met_puppi, met_puppi_wcut, met_pred, met_pred2 = postProcessing(data, preds)
 
                 performances_jet_puppi += perfs_jet_puppi
@@ -697,7 +687,7 @@ def main(modelname, filelists):
     # plt.xlim(-1.0,1.3)
     plt.xlabel(r"Jet Mass $(m_{reco} - m_{truth})/m_{truth}$")
     plt.ylabel('density')
-    plt.ylim(0, 6)
+    plt.ylim(0, 3.6)
     plt.rc('legend', fontsize=fontsize)
     plt.legend()
     plt.savefig("Jet_mass_diff.pdf")
@@ -933,58 +923,6 @@ def main(modelname, filelists):
     plt.ylabel(r'mass resolution $(m_{reco} - m_{truth})/m_{truth}$')
     plt.savefig("CHSMassReso2d.pdf")
 
-    fig = plt.figure(figsize=(10, 8))
-    mass_diff = np.array([getattr(perf, "mass_diff")
-                         for perf in performances_jet_pred0])
-    pt_truth = np.array([getattr(perf, "pt_truth")
-                         for perf in performances_jet_pred0])
-    a = plt.hist2d(pt_truth,mass_diff, bins=15, range=[[0,1500],[-1,1]], 
-              norm=mpl.colors.LogNorm())
-    plt.colorbar(a[3])
-    plt.title('SSL Jets')
-    plt.xlabel(r'pt [GeV]')
-    plt.ylabel(r'mass resolution $(m_{reco} - m_{truth})/m_{truth}$')
-    plt.savefig("SSLMassReso2dvspT.pdf")
-
-    fig = plt.figure(figsize=(10, 8))
-    mass_diff = np.array([getattr(perf, "mass_diff")
-                         for perf in performances_jet_puppi])
-    pt_truth = np.array([getattr(perf, "pt_truth")
-                         for perf in performances_jet_puppi])
-    a = plt.hist2d(pt_truth,mass_diff, bins=15, range=[[0,1500],[-1,1]], 
-              norm=mpl.colors.LogNorm())
-    plt.colorbar(a[3])
-    plt.title('PUPPI Jets')
-    plt.xlabel(r'pt [GeV]')
-    plt.ylabel(r'mass resolution $(m_{reco} - m_{truth})/m_{truth}$')
-    plt.savefig("PUPPIMassReso2dvspT.pdf")
-
-    fig = plt.figure(figsize=(10, 8))
-    mass_diff = np.array([getattr(perf, "mass_diff")
-                         for perf in performances_jet_puppi_wcut])
-    pt_truth = np.array([getattr(perf, "pt_truth")
-                         for perf in performances_jet_puppi_wcut])
-    a = plt.hist2d(pt_truth,mass_diff, bins=15, range=[[0,1500],[-1,1]], 
-              norm=mpl.colors.LogNorm())
-    plt.colorbar(a[3])
-    plt.title('PF Jets')
-    plt.xlabel(r'pt [GeV]')
-    plt.ylabel(r'mass resolution $(m_{reco} - m_{truth})/m_{truth}$')
-    plt.savefig("PFMassReso2dvspT.pdf")
-
-    fig = plt.figure(figsize=(10, 8))
-    mass_diff = np.array([getattr(perf, "mass_diff")
-                         for perf in performances_jet_CHS])
-    pt_truth = np.array([getattr(perf, "pt_truth")
-                         for perf in performances_jet_CHS])
-    a = plt.hist2d(pt_truth,mass_diff, bins=15, range=[[0,1500],[-1,1]], 
-              norm=mpl.colors.LogNorm())
-    plt.colorbar(a[3])
-    plt.title('CHS Jets')
-    plt.xlabel(r'pt [GeV]')
-    plt.ylabel(r'mass resolution $(m_{reco} - m_{truth})/m_{truth}$')
-    plt.savefig("CHSMassReso2dvspT.pdf")
-
 
 
 
@@ -1008,7 +946,7 @@ def main(modelname, filelists):
     plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='orange', linewidth=linewidth, 
              density=True, label=r'CHS, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
     # plt.xlim(0,40)
-    plt.ylim(0, 10)
+    plt.ylim(0, 7)
     plt.xlabel(r"Jet $p_{T}$ $(p^{reco}_{T} - p^{truth}_{T})/p^{truth}_{T}$")
     plt.ylabel('density')
     plt.rc('legend', fontsize=fontsize)
@@ -1042,5 +980,5 @@ def main(modelname, filelists):
 
 if __name__ == '__main__':
     modelname = "test/best_valid_model_nPU20_deeper.pt"
-    filelists = ["../data_pickle/dataset_graph_puppi_test_Wjets4000"]
+    filelists = ["../data_pickle/dataset_graph_puppi_test_Zjets4000"]
     main(modelname, filelists)
