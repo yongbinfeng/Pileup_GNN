@@ -55,7 +55,7 @@ def gen_dataframe(rfilename, num_event, num_start=0):
         gen_chosen = event[selected_features]
         df_genparts = ak.to_dataframe(gen_chosen)
         # eliminate those with eta more than 2.5 and also neutrinos
-        selection = (df_genparts['packedGenPart_eta'] < 2.5) & (abs(df_genparts['packedGenPart_pdgId']) != 12) & (
+        selection = (abs(df_genparts['packedGenPart_eta']) < 2.5) & (abs(df_genparts['packedGenPart_pdgId']) != 12) & (
             abs(df_genparts['packedGenPart_pdgId']) != 14) & (abs(df_genparts['packedGenPart_pdgId']) != 16)
         df_genparts = df_genparts[selection]
         df_gen_list.append(df_genparts)
@@ -125,7 +125,9 @@ def prepare_dataset(rfilename, num_event, num_start=0):
         # print ("pdgID_one_hot", pdgId_one_hot)
         # set the neutral puppiWeight to default
         index_puppi = 4
+        index_puppichg = 5
         pWeight = node_features[:, index_puppi].clone()
+        pWeightchg = node_features[:, index_puppichg].clone()
         node_features[[Neutral_index.tolist()], index_puppi] = 2
         puppiWeight = node_features[:, index_puppi]
         puppiWeight = puppiWeight.type(torch.long)
@@ -173,8 +175,10 @@ def prepare_dataset(rfilename, num_event, num_start=0):
         dist_eta = distance.cdist(eta, eta, 'cityblock')
 
         dist = np.sqrt(dist_phi ** 2 + dist_eta ** 2)
-        edge_source = np.where((dist < 0.4) & (dist != 0))[0]
-        edge_target = np.where((dist < 0.4) & (dist != 0))[1]
+        deltaRSetting = 0.8
+        #deltaRSetting = 0.4
+        edge_source = np.where((dist < deltaRSetting) & (dist != 0))[0]
+        edge_target = np.where((dist < deltaRSetting) & (dist != 0))[1]
 
         edge_index = np.array([edge_source, edge_target])
         edge_index = torch.from_numpy(edge_index)
@@ -188,6 +192,7 @@ def prepare_dataset(rfilename, num_event, num_start=0):
         graph.num_classes = 2
         graph.GenPart_nump = gen_features
         graph.pWeight = pWeight
+        graph.pWeightchg = pWeightchg
         data_list.append(graph)
 
     return data_list
@@ -196,22 +201,22 @@ def prepare_dataset(rfilename, num_event, num_start=0):
 def main():
     start = timer()
 
-    iname = "/Workdir/data/output_2.root"
-    num_events_train = 4000
-    oname = "../data_pickle/dataset_graph_puppi_" + str(num_events_train)
+    iname = "Wjets_output_10.root"
+    num_events_train = 20000
+    oname = "../data_pickle/dataset_graph_puppi_WjetsDR8" + str(num_events_train)
     dataset_train = prepare_dataset(iname, num_events_train)
     # save outputs in pickle format
     with open(oname, "wb") as fp:
         pickle.dump(dataset_train, fp)
 
-    num_events_test = 1000
-    oname = "../data_pickle/dataset_graph_puppi_test_" + str(num_events_test)
+    num_events_test = 4000
+    oname = "../data_pickle/dataset_graph_puppi_test_WjetsDR8" + str(num_events_test)
     dataset_test = prepare_dataset(iname, num_events_test, num_events_train)
-    with open(oname + str(num_events_test), "wb") as fp:
-        pickle.dump(dataset_train, fp)
+    with open(oname, "wb") as fp:
+        pickle.dump(dataset_test, fp)
 
-    num_events_valid = 1000
-    oname = "../data_pickle/dataset_graph_puppi_val_" + str(num_events_valid)
+    num_events_valid = 4000
+    oname = "../data_pickle/dataset_graph_puppi_val_WjetsDR8" + str(num_events_valid)
     dataset_valid = prepare_dataset(
         iname, num_events_valid, num_events_train + num_events_test)
     with open(oname, "wb") as fp:
