@@ -75,17 +75,10 @@ def prepare_dataset(rfilename, num_event, num_start=0):
 
     PTCUT = 0.5
     
-    #defination of edge distance
-    #deltaR < 0.8/0.3 are recognized as an edge
-    dist_phi = distance.cdist(phi, phi, 'cityblock')
-    # deal with periodic feature of phi
-    indices = np.where(dist_phi > pi)
-    temp = np.ceil((dist_phi[indices] - pi) / (2 * pi)) * (2 * pi)
-    dist_phi[indices] = dist_phi[indices] - temp
-    dist_eta = distance.cdist(eta, eta, 'cityblock')
-
-    dist = np.sqrt(dist_phi ** 2 + dist_eta ** 2)
+    #defination of max edge distance
+    #deltaR < 0.8/0.4 are recognized as an edge
     deltaRSetting = 0.8
+    #deltaRSetting = 0.4
 
     for num in range(len(df_pf_list)):
         if num % 10 == 0:
@@ -181,7 +174,16 @@ def prepare_dataset(rfilename, num_event, num_start=0):
         gen_features = gen_features.type(torch.float32)
 
         
-        #deltaRSetting = 0.4
+        dist_phi = distance.cdist(phi, phi, 'cityblock')
+        # deal with periodic feature of phi
+        indices = np.where(dist_phi > pi)
+        temp = np.ceil((dist_phi[indices] - pi) / (2 * pi)) * (2 * pi)
+        dist_phi[indices] = dist_phi[indices] - temp
+        dist_eta = distance.cdist(eta, eta, 'cityblock')
+
+        dist = np.sqrt(dist_phi ** 2 + dist_eta ** 2)
+
+        
         edge_source = np.where((dist < deltaRSetting) & (dist != 0))[0]
         edge_target = np.where((dist < deltaRSetting) & (dist != 0))[1]
 
