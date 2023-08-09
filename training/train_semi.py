@@ -5,6 +5,7 @@ from timeit import default_timer as timer
 import pickle
 import random
 import numpy as np
+import torch.nn as nn
 import argparse
 import torch
 from torch_geometric.data import DataLoader
@@ -51,46 +52,65 @@ def arg_parse():
                         help='directory to save trained model and plots')
 
     parser.set_defaults(model_type='Gated',
-                        num_layers=3,
+                        num_layers=7,
                         batch_size=4,
                         hidden_dim=20,
-                        dropout=0,
+                        dropout=0.0,
                         opt='adam',
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
-                        training_path="../data_pickle/dataset_graph_puppi_20000",
-                        validation_path="../data_pickle/dataset_graph_puppi_val_4000",
-                        save_dir="test",
+                        training_path="../data_pickle/dataset_graph_puppi_ZjetsDR820000",
+                        validation_path="../data_pickle/dataset_graph_puppi_val_ZjetsDR84000",
+                        save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu8000",
                         )
 
     return parser.parse_args()
 
 
-def train(dataset, dataset_validation, args, batchsize):
+def train(dataset, dataset_validation, trial, args, batchsize, tunning):
     directory = args.save_dir
     # parent_dir = "/home/gpaspala/new_Pileup_GNN/Pileup_GNN/fast_simulation/"
     # path = os.path.join(parent_dir, directory)
     path = directory
     isdir = os.path.isdir(path)
-
+    print("args:"+str(args.dropout))
     if isdir == False:
         os.mkdir(path)
 
     start = timer()
 
-    rotate_mask = 5
-    # rotate_mask = 2
-    if args.pulevel == 20:
-        rotate_mask = 8
-        num_select_LV = 3
-        num_select_PU = 45
-    elif args.pulevel == 80:
-        num_select_LV = 5
-        num_select_PU = 11
+    if tunning:
+
+       args.dropout = trial.suggest_float("dropout", 0.0, 0.1, step=0.025)
+       rotate_mask = trial.suggest_int("rotate_mask", 7, 12)
+    
+       num_select_LV = trial.suggest_int("num_select_LV", 2, 10)
+       num_select_PU = trial.suggest_int("num_select_PU", 5, 20)
+    
+    
+       g = [args.dropout, rotate_mask, num_select_LV, num_select_PU]
+       s = ""
+       for i in range(len(g)):
+           s = s + str(g[i]) + " "
+       f = open("datphys6dropout.txt", "w")
+       f.write(s)
+       f.close()
+
     else:
-        num_select_LV = 6
-        num_select_PU = 282
+
+       rotate_mask = 12
+       # rotate_mask = 2
+       if args.pulevel == 20:
+           rotate_mask = 8
+           num_select_LV = 3
+           num_select_PU = 45
+       elif args.pulevel == 80:
+           num_select_LV = 9
+           num_select_PU = 10
+       else:
+           num_select_LV = 6
+           num_select_PU = 282
 
     generate_mask(dataset, rotate_mask, num_select_LV, num_select_PU)
     generate_mask(dataset_validation, 1, num_select_LV, num_select_PU)
@@ -100,6 +120,12 @@ def train(dataset, dataset_validation, args, batchsize):
 
     model = models.GNNStack(
         dataset[0].num_feature_actual, args.hidden_dim, 1, args)
+
+    if torch.cuda.device_count() > 1:
+      print("Let's use", torch.cuda.device_count(), "GPUs!")
+      # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+      n_gpu = torch.cuda.device_count()
+      model = nn.DataParallel(model)
     model.to(device)
     scheduler, opt = utils.build_optimizer(args, model.parameters())
 
@@ -115,6 +141,7 @@ def train(dataset, dataset_validation, args, batchsize):
     loss_graph_train = []
     loss_graph_train_hybrid = []
     loss_graph_valid = []
+    loss_graph_valid_hybrid = []
     auc_graph_train = []
     auc_graph_train_hybrid = []
     auc_graph_valid = []
@@ -156,6 +183,8 @@ def train(dataset, dataset_validation, args, batchsize):
 
     count_event = 0
     best_validation_auc = 0
+    best_validation_SSLMassSigma = 999
+    best_valid_SSLMassdiffMu = 0
     converge = False
     converge_num_event = 0
     last_steady_event = 0
@@ -182,24 +211,31 @@ def train(dataset, dataset_validation, args, batchsize):
                                      feature_with_mask[:, -num_feature:]), 1)
                 batch = batch.to(device)
 
-                pred, _ = model.forward(batch)
+                pred, d_da = model.forward(batch)
 
                 label = batch.y
+                label_da = batch.mask_neu[:, 0]
+
                 train_mask = batch.x[:, num_feature]
                 # print("train mask: ", torch.sum(train_mask))
                 if train_mask_all != None:
                     train_mask_all = torch.cat((train_mask_all, train_mask), 0)
                 else:
                     train_mask_all = train_mask
-
+                
+                NeutralTag = np.zeros(len(label))
+                NeutralTag[batch.Neutral_index] = 1  # Tell which is neu
                 label = label[train_mask == 1]
                 label = label.type(torch.float)
                 label = label.view(-1, 1)
                 pred = pred[train_mask == 1]
-
+                label_da = label_da[(train_mask == 1) | (batch.mask_neu[:, 0] == 1 )]
+                label_da = label_da.type(torch.float)
+                label_da = label_da.view(-1, 1)
+                d_da = d_da[(train_mask == 1) | (batch.mask_neu[:, 0] == 1 )]
                 # print("pred: ", pred)
                 # print("label: ", label)
-                loss = model.loss(pred, label)
+                loss = model.loss(pred, label, d_da, label_da)
                 cur_loss += loss.item()
                 opt.zero_grad()
                 loss.backward()
@@ -217,7 +253,7 @@ def train(dataset, dataset_validation, args, batchsize):
             t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
             t.update()
 
-            if count_event % 1000 == 0:
+            if count_event % 500 == 0:
 
                 modelcolls = OrderedDict()
                 modelcolls['gated_boost'] = model
@@ -241,6 +277,7 @@ def train(dataset, dataset_validation, args, batchsize):
                 loss_graph_valid.append(valid_loss)
                 loss_graph_train.append(training_loss)
                 loss_graph_train_hybrid.append(training_loss_hybrid)
+                loss_graph_valid_hybrid.append(valid_loss_hybrid)
                 auc_graph_train_puppi.append(train_puppi_auc)
                 auc_graph_valid_puppi.append(valid_puppi_auc)
                 auc_graph_train.append(train_auc)
@@ -280,11 +317,18 @@ def train(dataset, dataset_validation, args, batchsize):
                 valid_graph_PUPPIPtdiffMu.append(valid_PUPPIPtdiffMu)
                 valid_graph_PUPPIPtSigma.append(valid_PUPPIPtSigma)
 
-                if valid_auc > best_validation_auc:
-                    best_validation_auc = valid_auc
-                    print("model is saved in " + path + "/best_valid_model_nPU11_deeper.pt")
-                    torch.save(model.state_dict(), path +
-                               "/best_valid_model_nPU11_deeper.pt")
+                #if valid_auc > best_validation_auc:
+                    #best_validation_auc = valid_auc
+                if (valid_SSLMassSigma/(1-abs(valid_SSLMassdiffMu))) < (best_validation_SSLMassSigma/(1-abs(best_valid_SSLMassdiffMu))):
+                    best_validation_SSLMassSigma = valid_SSLMassSigma 
+                    best_valid_SSLMassdiffMu = valid_SSLMassdiffMu 
+                    print("model is saved in " + path + "/best_valid_model_nPU11_deeper_Zjets.pt")
+                    if isinstance(model, torch.nn.DataParallel):
+                       model_state_dict = model.module.state_dict()
+                    else:
+                       model_state_dict = model.state_dict()
+                    torch.save(model_state_dict, path +
+                               "/best_valid_model_nPU11_deeper_Zjets.pt")
 
                 if valid_loss >= lowest_valid_loss:
                     print(
@@ -304,7 +348,7 @@ def train(dataset, dataset_validation, args, batchsize):
                     print("lowest valid loss " + str(valid_loss))
                     lowest_valid_loss = valid_loss
 
-                if count_event == 5000:
+                if count_event == 8000:
                     converge = True
                     break
 
@@ -314,10 +358,10 @@ def train(dataset, dataset_validation, args, batchsize):
     training_time = end - start
     print("training time " + str(training_time))
 
-    utils.plot_training(epochs_train, epochs_valid, loss_graph_train,
+    utils.plot_training(epochs_train, epochs_valid, loss_graph_train, loss_graph_train_hybrid,
                         loss_graph, auc_graph_train, train_accuracy_neu, auc_graph_train_puppi,
                         train_accuracy_puppi_neu,
-                        loss_graph_valid, auc_graph_valid, valid_accuracy_neu, auc_graph_valid_puppi,
+                        loss_graph_valid, loss_graph_valid_hybrid, auc_graph_valid, valid_accuracy_neu, auc_graph_valid_puppi,
                         valid_accuracy_puppi_neu,
                         auc_graph_neu_train, auc_graph_train_puppi_neu,
                         auc_graph_neu_valid, auc_graph_valid_puppi_neu, dir_name=args.save_dir
@@ -400,7 +444,8 @@ def test(loader, model, indicator, epoch, args, modelcolls, pathname):
         with torch.no_grad():
             num_feature = data.num_feature_actual[0].item()
             test_mask = data.x[:, num_feature]
-
+            mask_neu = data.mask_neu[:, 0]
+            random_mask_neu = data.random_mask_neu[:, 0]
             data.x = torch.cat(
                 (data.x[:, 0:num_feature], test_mask.view(-1, 1), data.x[:, -num_feature:]), 1)
             data = data.to(device)
@@ -409,6 +454,7 @@ def test(loader, model, indicator, epoch, args, modelcolls, pathname):
             # puppi = data.x[:, data.num_feature_actual[0].item() - 1]
             puppi = data.pWeight
             label = data.y
+            label_da = data.mask_neu[:, 0]
 
             if pred_all != None:
                 pred_all = torch.cat((pred_all, pred), 0)
@@ -421,7 +467,7 @@ def test(loader, model, indicator, epoch, args, modelcolls, pathname):
                 puppi_all = puppi
                 label_all = label
 
-            mask_neu = data.mask_neu[:, 0]
+            
 
             if test_mask_all != None:
                 test_mask_all = torch.cat((test_mask_all, test_mask), 0)
@@ -432,12 +478,23 @@ def test(loader, model, indicator, epoch, args, modelcolls, pathname):
 
             label = label[test_mask == 1]
             pred = pred[test_mask == 1]
-            pred_hybrid = pred_hybrid[test_mask == 1]
+            pred_hybrid = pred_hybrid[(test_mask == 1) | (mask_neu == 1 )]
             label = label.type(torch.float)
             label = label.view(-1, 1)
-            total_loss += model.loss(pred, label).item() * data.num_graphs
-            total_loss_hybrid += model.loss(pred_hybrid,
-                                            label).item() * data.num_graphs
+            label_da = label_da[(test_mask == 1) | (mask_neu == 1 )]
+            label_da = label_da.type(torch.float)
+            label_da = label_da.view(-1, 1)
+            LossBCE = nn.BCELoss()
+            epsi = 1e-10
+            total_loss += LossBCE(pred+epsi, label).item() * data.num_graphs
+            print("label_da")
+            print(label_da)
+            print("pred_hybrid")
+            print(pred_hybrid)
+            total_loss_hybrid += LossBCE(pred_hybrid, label_da).item() * data.num_graphs
+            #total_loss += model.loss(pred, label, pred_hybrid, label_da).item() * data.num_graphs
+            #total_loss_hybrid += model.loss(pred,
+            #                               label, pred_hybrid, label_da).item() * data.num_graphs
 
     if indicator == 0:
         total_loss /= min(epoch, len(loader.dataset))
@@ -668,27 +725,83 @@ def generate_neu_mask(dataset):
         Neutral_feature = graph.x[Neutral_index]
         Neutral_index = Neutral_index[torch.where(
             Neutral_feature[:, 2] > 0.5)[0]]
-
+        nLVPU = 19
+        random_mask_index = np.random.choice(Neutral_index,nLVPU,replace = False)
         mask_neu = torch.zeros(nparticles, 1)
+        random_mask_neu = torch.zeros(nparticles, 1)
         mask_neu[Neutral_index, 0] = 1
+        random_mask_neu[random_mask_index, 0] = 1
         graph.mask_neu = mask_neu
+        graph.random_mask_neu = random_mask_neu
 
     return dataset
-
-
-def main():
+def black_box_function(trial):
     args = arg_parse()
-    print("model type: ", args.model_type)
-
-    # load the constructed graphs
     with open(args.training_path, "rb") as fp:
         dataset = pickle.load(fp)
     with open(args.validation_path, "rb") as fp:
         dataset_validation = pickle.load(fp)
-
     generate_neu_mask(dataset)
     generate_neu_mask(dataset_validation)
-    train(dataset, dataset_validation, args, 1)
+    return train(dataset, dataset_validation, trial, args, 1, True)
+
+class Configuration(object):
+
+    def __init__(self):
+        args = arg_parse()
+        self.lr = args.lr
+        self.dropout = args.dropout
+        self.batch_size = args.batch_size
+        self.nPU = 7
+        self.nLV = 4
+        self.rotate_mask = 5
+
+    
+
+    def tunningMode(self):
+        mstart = timer()
+        study = optuna.create_study(study_name='Bayesian Optimization with Optuna', direction="minimize")
+        study.optimize(black_box_function, n_trials=9)
+        trial = study.best_trial
+        print('Best quant: {}'.format(trial.value))
+        s = "Best hyperparameters: {}".format(trial.params)
+        s2 = str(trial.number)
+        f = open("datphys6dropout.txt", "w")
+        f.write(s)
+        f.write(s2)
+        f.close()
+        mend = timer()
+        mbotime = mend - mstart
+        print("main time " + str(mbotime))
+        fig1 = optuna.visualization.plot_optimization_history(study, target_name = 'perf_auc mean')
+        fig2 = optuna.visualization.plot_param_importances(study)
+        fig3 = optuna.visualization.plot_edf(study, target_name = 'perf_auc mean')
+        fig1.write_image(file = "opt_history4var.png", format = 'png')
+        fig2.write_image(file = "param_importances4var.png", format='png')
+        fig3.write_image(file = "edf4var.png", format='png')
+
+
+    def trainingMode(self):
+        args = arg_parse()
+        args.dropout = 0.1
+        print("model type: ", args.model_type)
+
+        # load the constructed graphs
+        with open(args.training_path, "rb") as fp:
+           dataset = pickle.load(fp)
+        with open(args.validation_path, "rb") as fp:
+           dataset_validation = pickle.load(fp)
+
+        generate_neu_mask(dataset)
+        generate_neu_mask(dataset_validation)
+        trial = 1
+        train(dataset, dataset_validation, trial, args, 1, False)
+
+def main():
+
+    config = Configuration()
+
+    config.trainingMode()
 
 
 if __name__ == '__main__':
