@@ -65,3 +65,7 @@ You can specify arguments for training, or it will follow the default sets in th
 
 ### Testing ###
 Use the `testing/test_physics_metrics.py` for now.
+please make sure that training and testing are configured with the same nn model.
+```
+cp training/models.py testing
+```
