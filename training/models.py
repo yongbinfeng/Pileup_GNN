@@ -38,13 +38,21 @@ class GNNStack(torch.nn.Module):
         
         self.grl = GradientReverseLayer()
         self.post_da = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(
+            ), nn.Dropout(args.dropout),
+            nn.Linear(hidden_dim, hidden_dim),nn.ReLU(
+            ),nn.Linear(hidden_dim, hidden_dim),nn.ReLU(
+            ),nn.Dropout(args.dropout),
+            nn.Linear(hidden_dim, hidden_dim),nn.ReLU(
+            ),
             nn.Linear(hidden_dim, output_dim),
         )
 
         self.dropout = args.dropout
         self.beta_one = nn.parameter.Parameter(torch.rand(1))
         self.num_layers = args.num_layers
+
+        self.lamb = args.lamb
 
     def build_conv_model(self, model_type):
         if model_type == 'GraphSage':
@@ -94,13 +102,11 @@ class GNNStack(torch.nn.Module):
         weight[label == 1] = 2
         weight[label == 0] = 0.2
         """
-        lamb = 1.1
-        lamb = 4.0
         loss = nn.BCELoss()
         eps = 1e-10
         temp = loss(pred + eps, label)
         temp_da = loss(domain_discrimiant + eps, domain_label)
-        return temp + lamb*temp_da
+        return temp + self.lamb*temp_da
 
 
 class GraphSage(pyg_nn.MessagePassing):

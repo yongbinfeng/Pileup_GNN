@@ -44,6 +44,8 @@ def arg_parse():
                         help='Number of training epochs')
     parser.add_argument('--pulevel', type=int,
                         help='pileup level for the dataset')
+    parser.add_argument('--lamb', type=float,
+                        help='lambda for domain adaptation')
     parser.add_argument('--training_path', type=str,
                         help='path for training graphs')
     parser.add_argument('--validation_path', type=str,
@@ -60,9 +62,10 @@ def arg_parse():
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
+                        lamb = 0.05
                         training_path="../data_pickle/dataset_graph_puppi_ZjetsDR820000",
                         validation_path="../data_pickle/dataset_graph_puppi_val_ZjetsDR84000",
-                        save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu8000",
+                        save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu60000ld0p05",
                         )
 
     return parser.parse_args()
@@ -214,7 +217,7 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
                 pred, d_da = model.forward(batch)
 
                 label = batch.y
-                label_da = batch.mask_neu[:, 0]
+                label_da = batch.random_mask_neu[:, 0]
 
                 train_mask = batch.x[:, num_feature]
                 # print("train mask: ", torch.sum(train_mask))
@@ -229,10 +232,10 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
                 label = label.type(torch.float)
                 label = label.view(-1, 1)
                 pred = pred[train_mask == 1]
-                label_da = label_da[(train_mask == 1) | (batch.mask_neu[:, 0] == 1 )]
+                label_da = label_da[(train_mask == 1) | (batch.random_mask_neu[:, 0] == 1 )]
                 label_da = label_da.type(torch.float)
                 label_da = label_da.view(-1, 1)
-                d_da = d_da[(train_mask == 1) | (batch.mask_neu[:, 0] == 1 )]
+                d_da = d_da[(train_mask == 1) | (batch.random_mask_neu[:, 0] == 1 )]
                 # print("pred: ", pred)
                 # print("label: ", label)
                 loss = model.loss(pred, label, d_da, label_da)
@@ -253,7 +256,7 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
             t.set_postfix(loss='{:05.3f}'.format(loss_avg()))
             t.update()
 
-            if count_event % 500 == 0:
+            if count_event % 1000 == 0:
 
                 modelcolls = OrderedDict()
                 modelcolls['gated_boost'] = model
@@ -348,7 +351,7 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
                     print("lowest valid loss " + str(valid_loss))
                     lowest_valid_loss = valid_loss
 
-                if count_event == 8000:
+                if count_event == 60000:
                     converge = True
                     break
 
@@ -454,7 +457,7 @@ def test(loader, model, indicator, epoch, args, modelcolls, pathname):
             # puppi = data.x[:, data.num_feature_actual[0].item() - 1]
             puppi = data.pWeight
             label = data.y
-            label_da = data.mask_neu[:, 0]
+            label_da = data.random_mask_neu[:, 0]
 
             if pred_all != None:
                 pred_all = torch.cat((pred_all, pred), 0)
@@ -478,19 +481,15 @@ def test(loader, model, indicator, epoch, args, modelcolls, pathname):
 
             label = label[test_mask == 1]
             pred = pred[test_mask == 1]
-            pred_hybrid = pred_hybrid[(test_mask == 1) | (mask_neu == 1 )]
+            pred_hybrid = pred_hybrid[(test_mask == 1) | (random_mask_neu == 1 )]
             label = label.type(torch.float)
             label = label.view(-1, 1)
-            label_da = label_da[(test_mask == 1) | (mask_neu == 1 )]
+            label_da = label_da[(test_mask == 1) | (random_mask_neu == 1 )]
             label_da = label_da.type(torch.float)
             label_da = label_da.view(-1, 1)
             LossBCE = nn.BCELoss()
             epsi = 1e-10
             total_loss += LossBCE(pred+epsi, label).item() * data.num_graphs
-            print("label_da")
-            print(label_da)
-            print("pred_hybrid")
-            print(pred_hybrid)
             total_loss_hybrid += LossBCE(pred_hybrid, label_da).item() * data.num_graphs
             #total_loss += model.loss(pred, label, pred_hybrid, label_da).item() * data.num_graphs
             #total_loss_hybrid += model.loss(pred,
