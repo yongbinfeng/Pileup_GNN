@@ -62,7 +62,7 @@ def arg_parse():
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
-                        lamb = 0.05
+                        lamb = 0.05,
                         training_path="../data_pickle/dataset_graph_puppi_ZjetsDR820000",
                         validation_path="../data_pickle/dataset_graph_puppi_val_ZjetsDR84000",
                         save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu60000ld0p05",
