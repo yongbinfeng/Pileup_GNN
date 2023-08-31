@@ -44,8 +44,14 @@ def arg_parse():
                         help='Number of training epochs')
     parser.add_argument('--pulevel', type=int,
                         help='pileup level for the dataset')
+    parser.add_argument('--nLV', type=int,
+                        help='LV for the dataset')
+    parser.add_argument('--nPU', type=int,
+                        help='PU for the dataset')
     parser.add_argument('--lamb', type=float,
                         help='lambda for domain adaptation')
+    parser.add_argument('--grlparam', type=float,
+                        help='grl param for domain adaptation')
     parser.add_argument('--training_path', type=str,
                         help='path for training graphs')
     parser.add_argument('--validation_path', type=str,
@@ -62,10 +68,13 @@ def arg_parse():
                         weight_decay=0,
                         lr=0.001,
                         pulevel=80,
-                        lamb = 0.05,
+                        nLV=7,
+                        nPU=20,
+                        lamb = 0.08,
+                        grlparam = 0, #1:Open DANN, 0:Close DANN
                         training_path="../data_pickle/dataset_graph_puppi_ZjetsDR820000",
                         validation_path="../data_pickle/dataset_graph_puppi_val_ZjetsDR84000",
-                        save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu60000ld0p05",
+                        save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu60000ld0p08grlopennLV7nPU20DcLr",
                         )
 
     return parser.parse_args()
@@ -109,8 +118,8 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
            num_select_LV = 3
            num_select_PU = 45
        elif args.pulevel == 80:
-           num_select_LV = 9
-           num_select_PU = 10
+           num_select_LV = args.nLV
+           num_select_PU = args.nPU
        else:
            num_select_LV = 6
            num_select_PU = 282
@@ -350,8 +359,9 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
                 else:
                     print("lowest valid loss " + str(valid_loss))
                     lowest_valid_loss = valid_loss
-
-                if count_event == 60000:
+                if count_event % 5000 == 0:
+                    args.lr = args.lr*0.8
+                if count_event == 35000:
                     converge = True
                     break
 
@@ -715,7 +725,7 @@ def generate_mask(dataset, num_mask, num_select_LV, num_select_PU):
         graph.num_mask = num_mask
 
 
-def generate_neu_mask(dataset):
+def generate_neu_mask(dataset, args):
     # all neutrals with pt cuts are masked for evaluation
     for graph in dataset:
         nparticles = graph.num_nodes
@@ -724,7 +734,7 @@ def generate_neu_mask(dataset):
         Neutral_feature = graph.x[Neutral_index]
         Neutral_index = Neutral_index[torch.where(
             Neutral_feature[:, 2] > 0.5)[0]]
-        nLVPU = 19
+        nLVPU = args.nLV + args.nPU
         random_mask_index = np.random.choice(Neutral_index,nLVPU,replace = False)
         mask_neu = torch.zeros(nparticles, 1)
         random_mask_neu = torch.zeros(nparticles, 1)
@@ -740,8 +750,8 @@ def black_box_function(trial):
         dataset = pickle.load(fp)
     with open(args.validation_path, "rb") as fp:
         dataset_validation = pickle.load(fp)
-    generate_neu_mask(dataset)
-    generate_neu_mask(dataset_validation)
+    generate_neu_mask(dataset,args)
+    generate_neu_mask(dataset_validation,args)
     return train(dataset, dataset_validation, trial, args, 1, True)
 
 class Configuration(object):
@@ -791,8 +801,8 @@ class Configuration(object):
         with open(args.validation_path, "rb") as fp:
            dataset_validation = pickle.load(fp)
 
-        generate_neu_mask(dataset)
-        generate_neu_mask(dataset_validation)
+        generate_neu_mask(dataset,args)
+        generate_neu_mask(dataset_validation,args)
         trial = 1
         train(dataset, dataset_validation, trial, args, 1, False)
 
