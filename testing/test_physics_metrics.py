@@ -142,15 +142,19 @@ class Args(object):
 
     def __init__(self, model_type='Gated', do_boost=False, extralayers=False):
         self.model_type = model_type
-        self.num_layers = 3
+        self.num_layers = 6
         self.batch_size = 1
-        self.hidden_dim = 20
-        self.dropout = 0
+        self.hidden_dim = 33
+        self.dropout = 0.3
         self.opt = 'adam'
         self.weight_decay = 0
-        self.lr = 0.01
+        self.lr = 5.4e-4
         self.do_boost = do_boost
         self.extralayers = extralayers
+        self.nLV=1
+        self.nPU=23,
+        self.lamb = 1.77e-5,
+        self.grlparam = 0,
 
 
 class PerformanceMetrics(object):
@@ -165,7 +169,7 @@ class PerformanceMetrics(object):
         dR_diff = 0.
 
 
-def clusterJets(pt, eta, phi, ifAK8, ptcut=0., deltaR=0.4):
+def clusterJets(pt, eta, phi, ifAK8, ptcut=0., deltaR=0.4, chg = False):
     """
     cluster the jets based on the array of pt, eta, phi,
     of all particles (masses are assumed to be zero),
@@ -185,7 +189,9 @@ def clusterJets(pt, eta, phi, ifAK8, ptcut=0., deltaR=0.4):
     Ptmin = 30
     if ifAK8:
         Ptmin = 300
-    jets = sequence.inclusive_jets(ptmin=Ptmin)
+    if chg:
+        Ptmin = 150
+    jets = sequence.inclusive_jets(ptmin=200)
     #charged only
     #jets = sequence.inclusive_jets(ptmin=20)
 
@@ -296,6 +302,7 @@ def postProcessing(data, preds,ifAK8):
     pt = np.array(data.x[:, 2].cpu().detach())
     eta = np.array(data.x[:, 0].cpu().detach())
     phi = np.array(data.x[:, 1].cpu().detach())
+    pdgId = np.array(data.x[:, 3].cpu().detach())
     puppi = np.array(data.pWeight.cpu().detach())
     puppichg = np.array(data.pWeightchg.cpu().detach())
     # puppi = np.array(data.x[:,data.num_feature_actual[0].item()-1].cpu().detach())
@@ -304,6 +311,7 @@ def postProcessing(data, preds,ifAK8):
     pt_truth = np.array(data.GenPart_nump[:, 2].cpu().detach())
     eta_truth = np.array(data.GenPart_nump[:, 0].cpu().detach())
     phi_truth = np.array(data.GenPart_nump[:, 1].cpu().detach())
+    pdgId_truth = np.array(data.GenPart_nump[:, 3].cpu().detach())
     # print (pt)
 
     # print(truth)
@@ -311,8 +319,7 @@ def postProcessing(data, preds,ifAK8):
     # pred2 = np.array(pred2[:, 0].cpu().detach())
     # set all particle masses to zero
     mass = np.zeros(pt.shape[0])
-
-    
+       
 
     # remove pt < 0.5 particles
     pt[pt < 0.01] = 0
@@ -334,7 +341,14 @@ def postProcessing(data, preds,ifAK8):
 
     # truth information
     # pt_truth   = pt * truth
-
+    pt_chsinfo = np.array(data.x[:, 2].cpu().detach())
+    pt_truth_chsinfo = np.array(data.GenPart_nump[:, 2].cpu().detach())
+    pt_chsinfo[neutral_index] = 0
+    pt_truth_chsinfo[Gencharge==0] = 0
+    pt_chsinfo = pt_chsinfo*puppi
+    jets_truth_chsinfo = clusterJets(pt_truth_chsinfo, eta_truth, phi_truth, ifAK8)
+    jets_chsinfo = clusterJets(pt_chsinfo, eta, phi, ifAK8)
+    performances_jet_chs_info = compareJets(jets_truth_chsinfo, jets_chsinfo)
     
     if testneu == 1:
         chargeOnly = 0
@@ -344,6 +358,19 @@ def postProcessing(data, preds,ifAK8):
     if chargeOnly == 1 :
        pt[neutral_index] = 0
        pt_truth[Gencharge==0] = 0
+    
+    #chg test
+    ptchg = []
+    for i in range(len(pt)):
+        ptchg.append(pt[i])
+    ptchg = np.array(ptchg)
+    ptchg[neutral_index] = 0
+    ptchg_chs = ptchg * puppi
+     #photon only
+    #pt[pdgId==130] = 0
+    #pt_truth[pdgId_truth==130] = 0
+
+      
 
     # puppi information
     if testneu == 1:
@@ -384,6 +411,10 @@ def postProcessing(data, preds,ifAK8):
     jets_puppi = clusterJets(pt_puppi, eta, phi, ifAK8)
     njets_puppi, pt_jets_puppi, eta_jets_puppi, phi_jets_puppi, mass_jets_puppi = ExtractJet(jets_puppi)
     performances_jet_puppi = compareJets(jets_truth, jets_puppi)
+    
+    #chg test
+    jets_chg_chs = clusterJets(ptchg_chs, eta, phi, ifAK8, chg=True)
+    performances_jet_chg_chs = compareJets(jets_truth, jets_chg_chs)
 
     jets_puppi_wcut = clusterJets(pt_puppi_wcut, eta, phi, ifAK8)
     njets_pf, pt_jets_pf, eta_jets_pf, phi_jets_pf, mass_jets_pf = ExtractJet(jets_puppi_wcut)
@@ -469,7 +500,7 @@ def postProcessing(data, preds,ifAK8):
     
     
 
-    return met_truth,performances_jet_CHS, performances_jet_puppi, met_puppi, performances_jet_puppi_wcut, met_puppi_wcut, performances_jet_pred, mets_pred, neu_pred, neu_puppi, chlv_pred, chpu_pred, chlv_puppi, chpu_puppi, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS
+    return met_truth,performances_jet_chs_info,performances_jet_chg_chs,performances_jet_CHS, performances_jet_puppi, met_puppi, performances_jet_puppi_wcut, met_puppi_wcut, performances_jet_pred, mets_pred, neu_pred, neu_puppi, chlv_pred, chpu_pred, chlv_puppi, chpu_puppi, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS
 
 
 def test(filelists, models={}):
@@ -477,10 +508,12 @@ def test(filelists, models={}):
     for model in models.values():
         model.to('cuda:0')
         model.eval()
-
+ 
+    performances_jet_chs_info = []
     performances_jet_puppi = []
     performances_jet_CHS = []
     performances_jet_puppi_wcut = []
+    performances_jet_chg_chs = []
 
     mets_truth = []
     mets_puppi = []
@@ -538,8 +571,8 @@ def test(filelists, models={}):
         data = DataLoader(dataset, batch_size=1)
         loader = data
 
-        ifAK8 = 0
-        if (ifile=="data_pickle/dataset_graph_puppi_test_Wjets4000"):
+        ifAK8 = 1
+        if (ifile=="../data_pickle/dataset_graph_puppi_test_Zjets4000"):
             ifAK8 = 1
         
 
@@ -565,13 +598,15 @@ def test(filelists, models={}):
                     # print("pred here: ", pred)
                     preds.append(pred)
 
-                met_truth, perfs_jet_CHS, perfs_jet_puppi, met_puppi, perfs_jet_puppi_wcut, met_puppi_wcut, perfs_jet_pred, mets_fromF_pred, neus_pred, neus_puppi, chlvs_pred, chpus_pred, chlvs_puppi, chpus_puppi, Njets_pf, Njets_pred, Njets_puppi, Njets_truth, Njets_CHS, Pt_jets_pf, Pt_jets_pred, Pt_jets_puppi, Pt_jets_truth, Pt_jets_CHS, Eta_jets_pf, Eta_jets_pred, Eta_jets_puppi, Eta_jets_truth, Eta_jets_CHS, Phi_jets_pf, Phi_jets_pred, Phi_jets_puppi, Phi_jets_truth, Phi_jets_CHS, Mass_jets_pf, Mass_jets_pred, Mass_jets_puppi, Mass_jets_truth, Mass_jets_CHS = postProcessing(
+                met_truth,perfs_jet_chs_info, perfs_jet_chg_chs, perfs_jet_CHS, perfs_jet_puppi, met_puppi, perfs_jet_puppi_wcut, met_puppi_wcut, perfs_jet_pred, mets_fromF_pred, neus_pred, neus_puppi, chlvs_pred, chpus_pred, chlvs_puppi, chpus_puppi, Njets_pf, Njets_pred, Njets_puppi, Njets_truth, Njets_CHS, Pt_jets_pf, Pt_jets_pred, Pt_jets_puppi, Pt_jets_truth, Pt_jets_CHS, Eta_jets_pf, Eta_jets_pred, Eta_jets_puppi, Eta_jets_truth, Eta_jets_CHS, Phi_jets_pf, Phi_jets_pred, Phi_jets_puppi, Phi_jets_truth, Phi_jets_CHS, Mass_jets_pf, Mass_jets_pred, Mass_jets_puppi, Mass_jets_truth, Mass_jets_CHS = postProcessing(
                     data, preds, ifAK8)
                 # perfs_jet_puppi, perfs_jet_puppi_wcut, perfs_jet_pred, perfs_jet_pred2, met_truth, met_puppi, met_puppi_wcut, met_pred, met_pred2 = postProcessing(data, preds)
-
+                
+                performances_jet_chs_info += perfs_jet_chs_info
                 performances_jet_puppi += perfs_jet_puppi
                 performances_jet_CHS += perfs_jet_CHS
                 performances_jet_puppi_wcut += perfs_jet_puppi_wcut
+                performances_jet_chg_chs += perfs_jet_chg_chs
                 # performances_jet_pred += perfs_jet_pred
                 # performances_jet_pred2 += perfs_jet_pred2
 
@@ -640,7 +675,7 @@ def test(filelists, models={}):
 
         fp.close()
 
-    return mets_truth, performances_jet_CHS, performances_jet_puppi, mets_puppi, performances_jet_puppi_wcut, mets_puppi_wcut, performances_jet_pred, mets_pred, neu_weight, neu_puppiweight, chlv_weight, chpu_weight, chlv_puppiweight, chpu_puppiweight, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS
+    return mets_truth,performances_jet_chs_info, performances_jet_chg_chs, performances_jet_CHS, performances_jet_puppi, mets_puppi, performances_jet_puppi_wcut, mets_puppi_wcut, performances_jet_pred, mets_pred, neu_weight, neu_puppiweight, chlv_weight, chpu_weight, chlv_puppiweight, chpu_puppiweight, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS
 
 
 def main(modelname, filelists):
@@ -655,7 +690,7 @@ def main(modelname, filelists):
 
     # run the tests
     #filelists = ["../data_pickle/dataset_graph_puppi_test_40004000"]
-    mets_truth, performances_jet_CHS, performances_jet_puppi, mets_puppi, performances_jet_puppi_wcut, mets_puppi_wcut, performances_jet_pred, mets_pred, neu_weight, neu_puppiweight, chlv_weight, chpu_weight, chlv_puppiweight, chpu_puppiweight, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS = test(
+    mets_truth,performances_jet_chs_info,performances_jet_chg_chs, performances_jet_CHS, performances_jet_puppi, mets_puppi, performances_jet_puppi_wcut, mets_puppi_wcut, performances_jet_pred, mets_pred, neu_weight, neu_puppiweight, chlv_weight, chpu_weight, chlv_puppiweight, chpu_puppiweight, njets_pf, njets_pred, njets_puppi, njets_truth, njets_CHS, pt_jets_pf, pt_jets_pred, pt_jets_puppi, pt_jets_truth, pt_jets_CHS, eta_jets_pf, eta_jets_pred, eta_jets_puppi, eta_jets_truth, eta_jets_CHS, phi_jets_pf, phi_jets_pred, phi_jets_puppi, phi_jets_truth, phi_jets_CHS, mass_jets_pf, mass_jets_pred, mass_jets_puppi, mass_jets_truth, mass_jets_CHS = test(
         filelists, modelcolls)
 
     # plot the differences
@@ -694,6 +729,16 @@ def main(modelname, filelists):
                          for perf in performances_jet_CHS])
     plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='orange', linewidth=linewidth, 
              density=True, label=r'CHS, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
+    if testneu:
+        mass_diff = np.array([getattr(perf, "mass_diff")
+                         for perf in performances_jet_chs_info])
+        plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='purple', linewidth=linewidth, 
+             density=True, label=r'CHS chgonly, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
+
+    #mass_diff = np.array([getattr(perf, "mass_diff")
+    #                     for perf in performances_jet_chg_chs])
+    #plt.hist(mass_diff, bins=40, range=(-1, 1), histtype='step', color='purple', linewidth=linewidth, 
+    #         density=True, label=r'CHS,charged, $\mu={:10.2f}$, $\sigma={:10.2f}$, counts:'.format(*(getStat(mass_diff)))+str(len(mass_diff)))
     # plt.xlim(-1.0,1.3)
     plt.xlabel(r"Jet Mass $(m_{reco} - m_{truth})/m_{truth}$")
     plt.ylabel('density')
@@ -1007,6 +1052,10 @@ def main(modelname, filelists):
                        for perf in performances_jet_CHS])
     plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='orange', linewidth=linewidth, 
              density=True, label=r'CHS, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
+    #pt_diff = np.array([getattr(perf, "pt_diff")
+    #                   for perf in performances_jet_chg_chs])
+    #plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='purple', linewidth=linewidth, 
+    #        density=True, label=r'CHS,charged, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
     # plt.xlim(0,40)
     plt.ylim(0, 10)
     plt.xlabel(r"Jet $p_{T}$ $(p^{reco}_{T} - p^{truth}_{T})/p^{truth}_{T}$")
@@ -1041,6 +1090,6 @@ def main(modelname, filelists):
 
 
 if __name__ == '__main__':
-    modelname = "test/best_valid_model_nPU20_deeper.pt"
-    filelists = ["../data_pickle/dataset_graph_puppi_test_Wjets4000"]
+    modelname = "test/best_valid_model_nPU23_JackparamWjets.pt"
+    filelists = ["../data_pickle/dataset_graph_puppi_test_WjetsDR84000"]
     main(modelname, filelists)
