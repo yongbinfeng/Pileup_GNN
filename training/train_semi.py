@@ -60,21 +60,21 @@ def arg_parse():
                         help='directory to save trained model and plots')
 
     parser.set_defaults(model_type='Gated',
-                        num_layers=7,
+                        num_layers=6,
                         batch_size=4,
-                        hidden_dim=20,
-                        dropout=0.0,
+                        hidden_dim=33,
+                        dropout=0.3,
                         opt='adam',
                         weight_decay=0,
-                        lr=0.001,
+                        lr=5.4e-4,
                         pulevel=80,
-                        nLV=7,
-                        nPU=20,
-                        lamb = 0.08,
-                        grlparam = 0, #1:Open DANN, 0:Close DANN
-                        training_path="../data_pickle/dataset_graph_puppi_ZjetsDR820000",
-                        validation_path="../data_pickle/dataset_graph_puppi_val_ZjetsDR84000",
-                        save_dir="testZDR8_conv7_DANN4p0_DiscardrandomNeu60000ld0p08grlopennLV7nPU20DcLr",
+                        nLV=1,
+                        nPU=23,
+                        lamb = 5e-3, #1.77e-3,
+                        grlparam = 1, #1:Open DANN, 0:Close DANN
+                        training_path="../data_pickle/dataset_graph_puppi_WjetsDR820000",
+                        validation_path="../data_pickle/dataset_graph_puppi_val_WjetsDR84000",
+                        save_dir="testZDR8_conv7_DANN_JackBestParamLV1_WjetsLdx500",
                         )
 
     return parser.parse_args()
@@ -174,6 +174,10 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
     valid_accuracy_puppi_neu = []
     train_fig_names = []
     valid_fig_names = []
+    train_metricPUPPI = []
+    train_metricSSL = []
+    valid_metricPUPPI = []
+    valid_metricSSL = []
 
     train_graph_SSLMassdiffMu = []
     train_graph_PUPPIMassdiffMu = []
@@ -319,6 +323,8 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
                 train_graph_SSLPtSigma.append(train_SSLPtSigma)
                 train_graph_PUPPIPtdiffMu.append(train_PUPPIPtdiffMu)
                 train_graph_PUPPIPtSigma.append(train_PUPPIPtSigma)
+                train_metricPUPPI.append(valid_PUPPIMassSigma/(1-abs(valid_PUPPIMassdiffMu)))
+                train_metricSSL.append(valid_SSLMassSigma/(1-abs(valid_SSLMassdiffMu)))
 
                 valid_graph_SSLMassdiffMu.append(valid_SSLMassdiffMu)
                 valid_graph_PUPPIMassdiffMu.append(valid_PUPPIMassdiffMu)
@@ -328,6 +334,8 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
                 valid_graph_SSLPtSigma.append(valid_SSLPtSigma)
                 valid_graph_PUPPIPtdiffMu.append(valid_PUPPIPtdiffMu)
                 valid_graph_PUPPIPtSigma.append(valid_PUPPIPtSigma)
+                valid_metricPUPPI.append(valid_PUPPIMassSigma/(1-abs(valid_PUPPIMassdiffMu)))
+                valid_metricSSL.append(valid_SSLMassSigma/(1-abs(valid_SSLMassdiffMu)))
 
                 #if valid_auc > best_validation_auc:
                     #best_validation_auc = valid_auc
@@ -373,7 +381,7 @@ def train(dataset, dataset_validation, trial, args, batchsize, tunning):
 
     utils.plot_training(epochs_train, epochs_valid, loss_graph_train, loss_graph_train_hybrid,
                         loss_graph, auc_graph_train, train_accuracy_neu, auc_graph_train_puppi,
-                        train_accuracy_puppi_neu,
+                        train_accuracy_puppi_neu, train_metricPUPPI, valid_metricPUPPI, train_metricSSL, valid_metricSSL,
                         loss_graph_valid, loss_graph_valid_hybrid, auc_graph_valid, valid_accuracy_neu, auc_graph_valid_puppi,
                         valid_accuracy_puppi_neu,
                         auc_graph_neu_train, auc_graph_train_puppi_neu,

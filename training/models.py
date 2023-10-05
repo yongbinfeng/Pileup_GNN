@@ -35,8 +35,9 @@ class GNNStack(torch.nn.Module):
             ),nn.Linear(hidden_dim, hidden_dim),nn.ReLU(
             ),nn.Linear(hidden_dim, output_dim),
         )
-        
-        self.grl = GradientReverseLayer()
+        self.lamb = args.lamb
+        self.grlparam = args.grlparam
+        self.grl = GradientReverseLayer(self.grlparam)
         self.post_da = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim), nn.ReLU(
             ), nn.Dropout(args.dropout),
@@ -52,8 +53,7 @@ class GNNStack(torch.nn.Module):
         self.beta_one = nn.parameter.Parameter(torch.rand(1))
         self.num_layers = args.num_layers
 
-        self.lamb = args.lamb
-
+        
     def build_conv_model(self, model_type):
         if model_type == 'GraphSage':
             return GraphSage
@@ -165,11 +165,11 @@ class GradientReverseFunction(Function):
 
 
 class GradientReverseLayer(nn.Module):
-    def __init__(self):
+    def __init__(self,coeff):
         super(GradientReverseLayer, self).__init__()
-
+        self.coeff = coeff
     def forward(self, x):
-        return GradientReverseFunction.apply(x)
+        return GradientReverseFunction.apply(x,self.coeff)
 
 class Gated_model(pyg_nn.MessagePassing):
     def __init__(self, in_channels, out_channels, normalize_embedding=True):
