@@ -179,7 +179,7 @@ def clusterJets(pt, eta, phi, ptcut=0., deltaR=0.4):
     event = np.column_stack((pt_wptcut, eta_wptcut, phi_wptcut, mass_wptcut))
     event.dtype = DTYPE_PTEPM
     sequence = cluster(event, R=deltaR, p=-1)
-    jets = sequence.inclusive_jets(ptmin=300)
+    jets = sequence.inclusive_jets(ptmin=150)
     #charged only
     #jets = sequence.inclusive_jets(ptmin=20)
 
@@ -330,7 +330,7 @@ def postProcessing(data, preds):
     # pt_truth   = pt * truth
 
     
-    if testneu == 1:
+    if testneu == 1: 
         chargeOnly = 0
     else:
         chargeOnly = 1
@@ -687,7 +687,7 @@ def main(modelname, filelists):
     # plt.xlim(-1.0,1.3)
     plt.xlabel(r"Jet Mass $(m_{reco} - m_{truth})/m_{truth}$")
     plt.ylabel('density')
-    plt.ylim(0, 3.6)
+    plt.ylim(0, 6)
     plt.rc('legend', fontsize=fontsize)
     plt.legend()
     plt.savefig("Jet_mass_diff.pdf")
@@ -946,7 +946,7 @@ def main(modelname, filelists):
     plt.hist(pt_diff, bins=40, range=(-0.3, 0.3), histtype='step', color='orange', linewidth=linewidth, 
              density=True, label=r'CHS, $\mu={:10.3f}$, $\sigma={:10.3f}$, counts:'.format(*(getStat(pt_diff)))+str(len(pt_diff)))
     # plt.xlim(0,40)
-    plt.ylim(0, 7)
+    plt.ylim(0, 10)
     plt.xlabel(r"Jet $p_{T}$ $(p^{reco}_{T} - p^{truth}_{T})/p^{truth}_{T}$")
     plt.ylabel('density')
     plt.rc('legend', fontsize=fontsize)
